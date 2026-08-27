@@ -53,9 +53,14 @@ app.use('/api/line', lineBotRoutes);
 
 // Serve static files from client build (production)
 const clientDistPath = path.join(__dirname, '..', 'client', 'dist');
+const adminDistPath = path.join(__dirname, '..', 'admin-web', 'dist');
 app.use(express.static(clientDistPath));
+app.use('/admin', express.static(adminDistPath));
 
 // SPA fallback — serve index.html for all non-API routes
+app.get('/admin/*', (req, res) => {
+  res.sendFile(path.join(adminDistPath, 'index.html'));
+});
 app.get('*', (req, res) => {
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ error: 'API route not found' });

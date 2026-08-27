@@ -6,7 +6,7 @@
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "node server/index.js",
     "client": "npm --prefix client run dev",
-    "build": "cd client && npm install --include=dev && npm run build",
+    "build": "npm --prefix client install --include=dev && npm --prefix client run build && npm --prefix admin-web install --include=dev && npm --prefix admin-web run build",
     "start": "node server/index.js",
     "seed": "node server/seed.js"
   },
