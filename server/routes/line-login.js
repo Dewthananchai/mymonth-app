@@ -216,7 +216,90 @@ router.post('/liff-login', async (req, res) => {
   }
 });
 
-// 4. LINE Login status check
+// 4. LIFF Room — สร้าง/เข้าร่วมห้องouter.post('/liff-room', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    let user;
+    try {
+      const jwt = await import('jsonwebtoken');
+      user = jwt.default.verify(token, process.env.JWT_SECRET || 'mymonth-secret-2026');
+    } catch {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    const { action, roomName, roomCode, phone } = req.body;
+
+    // อัพเดทเบอร์โทร
+    if (phone) {
+      db.update('users', user.id, { promptpay_id: phone });
+    }
+
+    // ===== สร้างห้องใหม่ =====
+    if (action === 'create') {
+      if (!roomName || !roomName.trim()) {
+        return res.status(400).json({ error: 'กรุณากรอกชื่อห้อง' });
+      }
+
+      // สร้าง room code สุ่ม
+      let newRoomCode;
+      let attempts = 0;
+      do {
+        newRoomCode = generateRoomCode();
+        attempts++;
+      } while (db.findOne('rooms', r => r.room_code === newRoomCode) && attempts < 10);
+
+      db.insert('rooms', {
+        room_code: newRoomCode,
+        room_name: roomName.trim(),
+        created_by: user.email,
+      });
+
+      db.update('users', user.id, {
+        room_code: newRoomCode,
+        role: 'Admin',
+      });
+
+      return res.json({ success: true, room_code: newRoomCode, room_name: roomName.trim() });
+    }
+
+    // ===== เข้าร่วมห้อง =====
+    if (action === 'join') {
+      if (!roomCode || !roomCode.trim()) {
+        return res.status(400).json({ error: 'กรุณากรอกรหัสห้อง' });
+      }
+
+      const room = db.findOne('rooms', r => r.room_code === roomCode.trim().toUpperCase());
+      if (!room) {
+        return res.status(404).json({ error: 'ไม่พบรหัสห้องนี้ในระบบ' });
+      }
+
+      // ตรวจสอบจำนวนสมาชิก
+      const members = db.find('users', u => u.room_code === room.room_code);
+      if (members.length >= 10) {
+        return res.status(400).json({ error: 'ห้องเต็มแล้ว (สูงสุด 10 คน)' });
+      }
+
+      db.update('users', user.id, {
+        room_code: room.room_code,
+        role: 'Member',
+      });
+
+      return res.json({ success: true, room_code: room.room_code, room_name: room.room_name });
+    }
+
+    return res.status(400).json({ error: 'Invalid action' });
+  } catch (err) {
+    console.error('LIFF room error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// 5. LINE Login status check
 router.get('/status', (req, res) => {
   const { channelId } = LINE_CONFIG.channelLogin;
   res.json({
