@@ -58,23 +58,12 @@ const adminDistPath = path.join(__dirname, '..', 'admin-web', 'dist');
 app.use(express.static(clientDistPath));
 app.use('/admin', express.static(adminDistPath));
 
-// SPA fallback — serve index.html for all non-API routes
-app.get('/admin/*', (req, res) => {
-  res.sendFile(path.join(adminDistPath, 'index.html'));
-});
-app.get('*', (req, res) => {
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ error: 'API route not found' });
-  }
-  res.sendFile(path.join(clientDistPath, 'index.html'));
-});
-
-// Health check
+// Health check (must be before SPA fallback)
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', app: 'MyMonth API v2.0', timestamp: new Date().toISOString() });
 });
 
-// Debug: List all registered routes
+// Debug: List all registered routes (before SPA fallback)
 app.get('/api/debug/routes', (req, res) => {
   const routes = [];
   app._router.stack.forEach(layer => {
@@ -88,6 +77,17 @@ app.get('/api/debug/routes', (req, res) => {
     }
   });
   res.json({ routes });
+});
+
+// SPA fallback — serve index.html for all non-API routes
+app.get('/admin/*', (req, res) => {
+  res.sendFile(path.join(adminDistPath, 'index.html'));
+});
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API route not found' });
+  }
+  res.sendFile(path.join(clientDistPath, 'index.html'));
 });
 
 // Wait for DB init, then seed and start
