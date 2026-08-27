@@ -28,8 +28,8 @@ const LINE_CONFIG = {
   },
 
   // Callback URLs
-  callbackUrl: process.env.LINE_CALLBACK_URL || `https://${process.env.RENDER_EXTERNAL_URL ? new URL(process.env.RENDER_EXTERNAL_URL).host : 'localhost:5000'}/api/line/callback`,
-  frontendUrl: process.env.LINE_FRONTEND_URL || process.env.FRONTEND_URL || `https://${process.env.RENDER_EXTERNAL_URL ? new URL(process.env.RENDER_EXTERNAL_URL).host : 'localhost:3000'}`,
+  callbackUrl: process.env.LINE_CALLBACK_URL || `https://${process.env.FLY_APP_NAME ? process.env.FLY_APP_NAME + '.fly.dev' : process.env.RENDER_EXTERNAL_URL ? new URL(process.env.RENDER_EXTERNAL_URL).host : 'localhost:5000'}/api/line/callback`,
+  frontendUrl: process.env.LINE_FRONTEND_URL || process.env.FRONTEND_URL || `https://${process.env.FLY_APP_NAME ? process.env.FLY_APP_NAME + '.fly.dev' : process.env.RENDER_EXTERNAL_URL ? new URL(process.env.RENDER_EXTERNAL_URL).host : 'localhost:3000'}`,
 };
 
 export default LINE_CONFIG;
