@@ -16,29 +16,10 @@
 
 import express from 'express';
 import crypto from 'crypto';
-import bcrypt from 'bcryptjs';
 import LINE_CONFIG from '../config/line.js';
 import { db } from '../db.js';
 
 const router = express.Router();
-
-// ===== Onboarding State (in-memory, keyed by LINE userId) =====
-const onboardingState = new Map();
-
-function generateRoomCode() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = '';
-  for (let i = 0; i < 8; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
-  return code;
-}
-
-// Clear onboarding state after 10 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, val] of onboardingState) {
-    if (now - val.startedAt > 10 * 60 * 1000) onboardingState.delete(key);
-  }
-}, 60_000);
 
 // ตรวจสอบ webhook signature
 function verifyWebhookSignature(body, signature) {
@@ -105,109 +86,6 @@ async function pushMessage(userId, messages) {
   }
 }
 
-// ===== Onboarding Flow =====
-async function handleOnboardingStep(replyToken, userId, text, state) {
-  const { step, data } = state;
-
-  // Step 1: รับชื่อ
-  if (step === 'name') {
-    const name = text.trim();
-    if (name.length < 1 || name.length > 50) {
-      await replyMessage(replyToken, {
-        type: 'text',
-        text: '❌ กรุณาพิมพ์ชื่อที่ต้องการแสดงในระบบ (1-50 ตัวอักษร)',
-      });
-      return;
-    }
-    state.data.full_name = name;
-    state.step = 'phone';
-    onboardingState.set(userId, state);
-    await replyMessage(replyToken, {
-      type: 'text',
-      text: `✅ ชื่อ: ${name}\n\n📱 ขั้นตอนที่ 2/3\nพิมพ์หมายเลขโทรศัพท์ หรือ พร้อมเพย์ ID\n\nเช่น "0812345678"\nหรือพิมพ์ "ข้าม" เพื่อข้ามขั้นตอนนี้`,
-    });
-    return;
-  }
-
-  // Step 2: รับเบอร์โทร / พร้อมเพย์
-  if (step === 'phone') {
-    const phone = text.trim();
-    if (phone !== 'ข้าม' && phone !== 'skip') {
-      state.data.promptpay_id = phone;
-    } else {
-      state.data.promptpay_id = '';
-    }
-    state.step = 'room';
-    onboardingState.set(userId, state);
-    await replyMessage(replyToken, {
-      type: 'text',
-      text: `✅ ข้อมูลติดต่อ: ${state.data.promptpay_id || 'ข้าม'}\n\n🏢 ขั้นตอนที่ 3/3\nเลือกวิธีจัดการห้อง:\n\n1️⃣ พิมพ์ "สร้าง" → สร้างห้องใหม่ (คุณเป็น Admin)\n2️⃣ พิมพ์รหัสห้อง เช่น "ABC123" → เข้าร่วมห้องที่มีอยู่`,
-    });
-    return;
-  }
-
-  // Step 3: เลือกห้อง
-  if (step === 'room') {
-    const input = text.trim();
-    let roomCode;
-    let role = 'Member';
-
-    if (input.toLowerCase() === 'สร้าง' || input.toLowerCase() === 'create') {
-      // สร้างห้องใหม่
-      roomCode = generateRoomCode();
-      db.insert('rooms', {
-        room_code: roomCode,
-        room_name: `ห้อง ${data.full_name}`,
-        created_by: data.full_name,
-      });
-      role = 'Admin';
-    } else if (input.length >= 4 && input.length <= 12) {
-      // เข้าร่วมห้อง
-      roomCode = input.toUpperCase();
-      const existingRoom = db.findOne('rooms', r => r.room_code === roomCode);
-      if (!existingRoom) {
-        // สร้างห้องใหม่ถ้าไม่มี
-        db.insert('rooms', {
-          room_code: roomCode,
-          room_name: `ห้อง ${roomCode}`,
-          created_by: data.full_name,
-        });
-        role = 'Admin';
-      }
-    } else {
-      await replyMessage(replyToken, {
-        type: 'text',
-        text: '❌ กรุณาพิมพ์ "สร้าง" เพื่อสร้างห้องใหม่\nหรือพิมพ์รหัสห้อง (4-12 ตัวอักษร)',
-      });
-      return;
-    }
-
-    // สร้าง user ในระบบ
-    const email = `line_${userId.substring(0, 8)}@mymonth.app`;
-    const password_hash = await bcrypt.hash(crypto.randomUUID(), 10);
-
-    const newUser = db.insert('users', {
-      email,
-      password_hash,
-      full_name: data.full_name,
-      role,
-      room_code: roomCode,
-      promptpay_id: data.promptpay_id || '',
-      avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(data.full_name)}`,
-      line_user_id: userId,
-      line_link_code: '',
-    });
-
-    // ลบ onboarding state
-    onboardingState.delete(userId);
-
-    await replyMessage(replyToken, {
-      type: 'text',
-      text: `🎉 ตั้งค่าสำเร็จ!\n\n👤 ชื่อ: ${data.full_name}\n📱 โทรศัพท์: ${data.promptpay_id || 'ไม่ระบุ'}\n🏠 ห้อง: ${roomCode}\n🛡️ ตำแหน่ง: ${role}\n\n✅ ตอนนี้คุณสามารถบันทึกรายจ่ายผ่าน LINE ได้แล้ว!\n\n💡 พิมพ์ "ช่วย" เพื่อดูคำสั่งที่ใช้ได้`,
-    });
-    return;
-  }
-}
 
 // Webhook endpoint
 router.post('/webhook', async (req, res) => {
@@ -234,15 +112,8 @@ async function handleTextMessage(event) {
   // หา user ในระบบ
   const user = db.findOne('users', u => u.line_user_id === userId);
 
-  // ถ้าไม่เจอ → เริ่ม onboarding หรือเชื่อมบัญชี
+  // ถ้าไม่เจอ → แจ้งให้เชื่อมบัญชี
   if (!user) {
-    // ตรวจสอบว่ากำลัง onboarding อยู่หรือไม่
-    const obState = onboardingState.get(userId);
-
-    if (obState) {
-      return await handleOnboardingStep(replyToken, userId, text, obState);
-    }
-
     // ตรวจสอบว่ามีคำสั่งเชื่อมบัญชีหรือไม่
     if (text.toLowerCase().startsWith('เชื่อม ')) {
       const code = text.replace('เชื่อม ', '').trim();
@@ -257,11 +128,9 @@ async function handleTextMessage(event) {
       }
     }
 
-    // เริ่ม onboarding flow
-    onboardingState.set(userId, { step: 'name', data: {}, startedAt: Date.now() });
     await replyMessage(replyToken, {
       type: 'text',
-      text: `👋 สวัสดีค่ะ! ยินดีต้อนรับสู่ MyMonth 🎉\n\n📦 ระบบจัดการรายจ่ายส่วนตัวและร่วม\n\nกรุณาตั้งค่าบัญชีของคุณ:\n\n✏️ ขั้นตอนที่ 1/3\nพิมพ์ชื่อที่ต้องการแสดงในระบบ\nเช่น "ดิว" หรือ "ป๊อบ"`,
+      text: `👋 สวัสดีค่ะ! MyMonth 🎉\n\n⚠️ คุณยังไม่ได้เชื่อมต่อบัญชี\nกรุณาเข้าเว็บ MyMonth เพื่อเชื่อมต่อ LINE\n\n🔗 ${LINE_CONFIG.frontendUrl || 'https://mymonth-app.onrender.com'}`,
     });
     return;
   }
