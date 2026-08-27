@@ -164,7 +164,7 @@ router.get('/callback', async (req, res) => {
 });
 
 // 3. LIFF Login — เปิด MyMonth ภายใน LINE
-router.post('/liff-login', async (req, res) => {
+rrouter.post('/liff-login', async (req, res) => {
   try {
     const { lineUserId, displayName, pictureUrl } = req.body;
 
@@ -216,7 +216,8 @@ router.post('/liff-login', async (req, res) => {
   }
 });
 
-// 4. LIFF Room — สร้าง/เข้าร่วมห้องouter.post('/liff-room', async (req, res) => {
+// 4. LIFF Room — สร้าง/เข้าร่วมห้อง
+router.post('/liff-room', async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
