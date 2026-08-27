@@ -27,7 +27,19 @@ function generateRoomCode() {
 router.get('/login', (req, res) => {
   const { channelId } = LINE_CONFIG.channelLogin;
   if (!channelId) {
-    return res.status(503).json({ error: 'LINE Login ยังไม่ได้ตั้งค่า LINE_CHANNEL_LOGIN_ID' });
+    return res.status(503).json({
+      error: 'LINE Login ยังไม่ได้ตั้งค่า',
+      debug: {
+        LINE_CHANNEL_LOGIN_ID: process.env.LINE_CHANNEL_LOGIN_ID || '(empty)',
+        LINE_CHANNEL_ID: process.env.LINE_CHANNEL_ID || '(empty)',
+        LINE_CHANNEL_LOGIN_SECRET: process.env.LINE_CHANNEL_LOGIN_SECRET ? '***set***' : '(empty)',
+        LINE_CHANNEL_SECRET: process.env.LINE_CHANNEL_SECRET ? '***set***' : '(empty)',
+        LINE_CHANNEL_ACCESS_TOKEN: process.env.LINE_CHANNEL_ACCESS_TOKEN ? '***set***' : '(empty)',
+        LINE_MESSAGING_CHANNEL_ID: process.env.LINE_MESSAGING_CHANNEL_ID || '(empty)',
+        LINE_FRONTEND_URL: process.env.LINE_FRONTEND_URL || '(empty)',
+        RENDER_EXTERNAL_URL: process.env.RENDER_EXTERNAL_URL || '(empty)',
+      }
+    });
   }
 
   const state = crypto.randomBytes(16).toString('hex');
