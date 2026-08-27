@@ -17,6 +17,7 @@ import lineLoginRoutes from './routes/line-login.js';
 import lineNotifyRoutes from './routes/line-notify.js';
 import lineBotRoutes from './routes/line-bot.js';
 import { seedDatabase } from './seed.js';
+import { db } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -89,15 +90,16 @@ app.get('/api/debug/routes', (req, res) => {
   res.json({ routes });
 });
 
-// Auto seed if empty
-seedDatabase(false).then(() => {
+// Wait for DB init, then seed and start
+async function start() {
+  try {
+    await db.ready;
+    await seedDatabase(false);
+  } catch (err) {
+    console.error('Init error:', err);
+  }
   app.listen(PORT, () => {
     console.log(`🚀 MyMonth Backend Server running on http://localhost:${PORT}`);
   });
-}).catch(err => {
-  console.error('Seed failed:', err);
-  // Start server anyway
-  app.listen(PORT, () => {
-    console.log(`🚀 MyMonth Backend Server running on http://localhost:${PORT} (seed failed)`);
-  });
-});
+}
+start();
