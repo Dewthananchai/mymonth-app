@@ -176,23 +176,15 @@ router.post('/liff-login', async (req, res) => {
     let user = db.findOne('users', u => u.line_user_id === lineUserId);
 
     if (!user) {
-      // สร้าง user ใหม่
+      // สร้าง user ใหม่ (ยังไม่มีห้อง - จะได้ห้องจาก onboarding)
       const lineEmail = `line_${lineUserId}@line.mymonth.app`;
-
-      // สร้างห้องใหม่
-      const newRoomCode = generateRoomCode();
-      db.insert('rooms', {
-        room_code: newRoomCode,
-        room_name: `ห้องส่วนตัว (${displayName})`,
-        created_by: lineEmail,
-      });
 
       user = db.insert('users', {
         email: lineEmail,
         password_hash: crypto.randomUUID(),
         full_name: displayName || 'User',
-        role: 'Admin',
-        room_code: newRoomCode,
+        role: 'Member',
+        room_code: '',
         promptpay_id: '',
         avatar_url: pictureUrl || '',
         line_user_id: lineUserId,
