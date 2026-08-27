@@ -97,11 +97,168 @@ router.post('/webhook', async (req, res) => {
 
   // ประมวลผล event ทีละตัว
   for (const event of events) {
+    if (event.type === 'follow') {
+      await handleFollowEvent(event);
+    }
     if (event.type === 'message' && event.message.type === 'text') {
       await handleTextMessage(event);
     }
   }
 });
+
+// ===== Greeting Message — เมื่อ user ใหม่เพิ่มเพื่อน LINE OA =====
+async function handleFollowEvent(event) {
+  const { replyToken, source } = event;
+  const userId = source.userId;
+
+  // หา user ในระบบ
+  const user = db.findOne('users', u => u.line_user_id === userId);
+
+  const frontendUrl = LINE_CONFIG.frontendUrl || 'https://mymonth-app.fly.dev';
+  const liffUrl = `${frontendUrl}/liff`;
+
+  if (user) {
+    // user เดิม — ต้อนรับกลับ
+    await replyMessage(replyToken, [
+      {
+        type: 'flex',
+        altText: `👋 ยินดีต้อนรับกลับ ${user.full_name}!`,
+        contents: {
+          type: 'bubble',
+          size: 'giga',
+          header: {
+            type: 'box',
+            layout: 'vertical',
+            contents: [
+              { type: 'text', text: '🎉 ยินดีต้อนรับกลับ!', weight: 'bold', size: 'xl', color: '#FFFFFF' },
+              { type: 'text', text: 'MyMonth — ระบบจัดการรายจ่าย', size: 'sm', color: '#FFFFFFCC' },
+            ],
+            backgroundColor: '#0D9488',
+            paddingAll: '20px',
+          },
+          body: {
+            type: 'box',
+            layout: 'vertical',
+            contents: [
+              {
+                type: 'box', layout: 'horizontal', contents: [
+                  { type: 'text', text: '👤', size: 'lg' },
+                  { type: 'text', text: user.full_name, weight: 'bold', size: 'md', margin: 'sm' },
+                ],
+              },
+              {
+                type: 'box', layout: 'horizontal', contents: [
+                  { type: 'text', text: '🏠', size: 'lg' },
+                  { type: 'text', text: `ห้อง: ${user.room_code || 'ยังไม่ได้เข้าห้อง'}`, size: 'md', margin: 'sm', color: '#666666' },
+                ],
+                margin: 'md',
+              },
+              { type: 'separator', margin: 'xl' },
+              {
+                type: 'text', text: '💰 พิมพ์จำนวนเงิน เช่น "ค่าไฟ 500" เพื่อบันทึกรายจ่าย', size: 'sm', color: '#666666', margin: 'lg', wrap: true,
+              },
+              {
+                type: 'text', text: '📊 พิมพ์ "สรุป" เพื่อดูสรุปรายเดือน', size: 'sm', color: '#666666', margin: 'sm', wrap: true,
+              },
+              {
+                type: 'text', text: '❓ พิมพ์ "ช่วย" เพื่อดูคำสั่งทั้งหมด', size: 'sm', color: '#666666', margin: 'sm', wrap: true,
+              },
+            ],
+            paddingAll: '20px',
+          },
+          footer: {
+            type: 'box', layout: 'vertical', contents: [
+              {
+                type: 'button',
+                action: { type: 'uri', uri: liffUrl, label: '📱 เปิด MyMonth' },
+                style: 'primary',
+                color: '#0D9488',
+                height: 'md',
+              },
+              {
+                type: 'button',
+                action: { type: 'message', text: 'ช่วย', label: '📖 ดูคำสั่ง' },
+                style: 'secondary',
+                height: 'sm',
+                margin: 'sm',
+              },
+            ],
+            paddingAll: '15px',
+          },
+        },
+      },
+    ]);
+    return;
+  }
+
+  // user ใหม่ — Greeting Message + LIFF
+  await replyMessage(replyToken, [
+    {
+      type: 'flex',
+      altText: '👋 สวัสดีค่ะ! ยินดีต้อนรับสู่ MyMonth 🎉',
+      contents: {
+        type: 'bubble',
+        size: 'giga',
+        header: {
+          type: 'box',
+          layout: 'vertical',
+          contents: [
+            { type: 'text', text: '🎉 สวัสดีค่ะ!', weight: 'bold', size: 'xl', color: '#FFFFFF' },
+            { type: 'text', text: 'ยินดีต้อนรับสู่ MyMonth', size: 'lg', color: '#FFFFFFDD' },
+            { type: 'text', text: 'ระบบจัดการรายจ่ายส่วนตัวและร่วม', size: 'sm', color: '#FFFFFFAA', margin: 'sm' },
+          ],
+          backgroundColor: '#0D9488',
+          paddingAll: '20px',
+        },
+        body: {
+          type: 'box',
+          layout: 'vertical',
+          contents: [
+            {
+              type: 'text', text: '✨ ฟีเจอร์ที่ใช้ได้', weight: 'bold', size: 'md', margin: 'md',
+            },
+            {
+              type: 'box', layout: 'vertical', contents: [
+                { type: 'text', text: '💰 บันทึกรายจ่ายผ่าน LINE', size: 'sm', color: '#555555', margin: 'sm' },
+                { type: 'text', text: '📊 ดูสรุปรายเดือน', size: 'sm', color: '#555555', margin: 'sm' },
+                { type: 'text', text: '🐷 ดูงบประมาณ', size: 'sm', color: '#555555', margin: 'sm' },
+                { type: 'text', text: '🟢 แบ่งจ่ายรายจ่ายร่วม', size: 'sm', color: '#555555', margin: 'sm' },
+                { type: 'text', text: '🔔 แจ้งเตือนเมื่อบันทึกใหม่', size: 'sm', color: '#555555', margin: 'sm' },
+              ],
+            },
+            { type: 'separator', margin: 'lg' },
+            {
+              type: 'text', text: '📱 วิธีเริ่มใช้งาน', weight: 'bold', size: 'md', margin: 'lg',
+            },
+            {
+              type: 'box', layout: 'vertical', contents: [
+                { type: 'text', text: '1️⃣ เปิด MyMonth เพื่อสมัคร/เข้าสู่ระบบ', size: 'sm', color: '#555555', margin: 'sm' },
+                { type: 'text', text: '2️⃣ เชื่อมต่อบัญชี LINE กับ MyMonth', size: 'sm', color: '#555555', margin: 'sm' },
+                { type: 'text', text: '3️⃣ เริ่มบันทึกรายจ่ายผ่าน LINE ได้เลย!', size: 'sm', color: '#555555', margin: 'sm' },
+              ],
+            },
+            {
+              type: 'text', text: '💡 พิมพ์ "ช่วย" เพื่อดูคำสั่งทั้งหมด', size: 'sm', color: '#0D9488', margin: 'lg', wrap: true, weight: 'bold',
+            },
+          ],
+          paddingAll: '15px',
+        },
+        footer: {
+          type: 'box', layout: 'vertical', contents: [
+            {
+              type: 'button',
+              action: { type: 'uri', uri: liffUrl, label: '🚀 เริ่มใช้งาน MyMonth' },
+              style: 'primary',
+              color: '#0D9488',
+              height: 'lg',
+            },
+          ],
+          paddingAll: '15px',
+        },
+      },
+    },
+  ]);
+}
 
 // จัดการข้อความจากผู้ใช้
 async function handleTextMessage(event) {

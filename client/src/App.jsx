@@ -5,6 +5,7 @@ import Navbar from './components/Navbar';
 import Toast from './components/Toast';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import LiffPage from './pages/LiffPage';
 import DashboardPage from './pages/DashboardPage';
 import ExpensesPage from './pages/ExpensesPage';
 import BudgetPage from './pages/BudgetPage';
@@ -13,6 +14,11 @@ import SettingsPage from './pages/SettingsPage';
 import AddExpenseModal from './pages/AddExpenseModal';
 
 function MainApp() {
+  // LIFF page — ตรวจสอบ path ก่อน
+  if (window.location.pathname === '/liff') {
+    return <LiffPage />;
+  }
+
   const { user, loading } = useAuth();
   const [authView, setAuthView] = useState('login'); // 'login' | 'register'
   const [currentTab, setCurrentTab] = useState('dashboard');

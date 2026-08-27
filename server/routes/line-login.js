@@ -163,7 +163,60 @@ router.get('/callback', async (req, res) => {
   }
 });
 
-// 3. LINE Login status check
+// 3. LIFF Login — เปิด MyMonth ภายใน LINE
+router.post('/liff-login', async (req, res) => {
+  try {
+    const { lineUserId, displayName, pictureUrl } = req.body;
+
+    if (!lineUserId) {
+      return res.status(400).json({ error: 'Missing lineUserId' });
+    }
+
+    // หา user ที่มี line_user_id ตรงกัน
+    let user = db.findOne('users', u => u.line_user_id === lineUserId);
+
+    if (!user) {
+      // สร้าง user ใหม่
+      const lineEmail = `line_${lineUserId}@line.mymonth.app`;
+
+      // สร้างห้องใหม่
+      const newRoomCode = generateRoomCode();
+      db.insert('rooms', {
+        room_code: newRoomCode,
+        room_name: `ห้องส่วนตัว (${displayName})`,
+        created_by: lineEmail,
+      });
+
+      user = db.insert('users', {
+        email: lineEmail,
+        password_hash: crypto.randomUUID(),
+        full_name: displayName || 'User',
+        role: 'Admin',
+        room_code: newRoomCode,
+        promptpay_id: '',
+        avatar_url: pictureUrl || '',
+        line_user_id: lineUserId,
+      });
+    } else {
+      // อัพเดทข้อมูล LINE
+      db.update('users', user.id, {
+        avatar_url: pictureUrl || user.avatar_url,
+        full_name: displayName || user.full_name,
+      });
+    }
+
+    // สร้าง JWT token
+    const token = generateToken(user);
+    const { password_hash: _, ...safeUser } = user;
+
+    res.json({ token, user: safeUser });
+  } catch (err) {
+    console.error('LIFF login error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// 4. LINE Login status check
 router.get('/status', (req, res) => {
   const { channelId } = LINE_CONFIG.channelLogin;
   res.json({
