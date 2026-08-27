@@ -747,7 +747,7 @@ function SystemPage() {
 // ========== MAIN APP ==========
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/admin">
       <AdminAuthProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
