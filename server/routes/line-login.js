@@ -164,7 +164,7 @@ router.get('/callback', async (req, res) => {
 });
 
 // 3. LIFF Login — เปิด MyMonth ภายใน LINE
-rrouter.post('/liff-login', async (req, res) => {
+router.post('/liff-login', async (req, res) => {
   try {
     const { lineUserId, displayName, pictureUrl } = req.body;
 
