@@ -1,0 +1,15 @@
+node_modules
+client/node_modules
+admin-web/node_modules
+client/dist
+admin-web/dist
+server/data
+.git
+.gitignore
+*.md
+.env
+.env.*
+render.yaml
+run-*.bat
+server-output.log
+ngrok.exe
