@@ -129,20 +129,20 @@ function createRecordExpenseFlexMessage() {
         ],
         paddingAll: '20px',
       },
-    },
-    quickReply: {
-      items: [
-        {
-          type: 'action',
-          action: {
-            type: 'message',
-            label: '💰 จดรายจ่าย',
-            text: 'จดรายจ่าย',
-            inputOption: 'openKeyboard',
-            fillInText: ''
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          {
+            type: 'button',
+            action: { type: 'message', text: 'จดรายจ่าย', label: '💰 จดรายจ่าย' },
+            style: 'primary',
+            color: '#E91E63',
+            height: 'lg',
           },
-        },
-      ],
+        ],
+        paddingAll: '15px',
+      },
     },
   };
 }
