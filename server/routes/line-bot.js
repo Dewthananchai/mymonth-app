@@ -391,7 +391,18 @@ async function handleTextMessage(event) {
 
   // จดรายจ่าย - แสดง Flex Message
   if (['จดรายจ่าย', 'จด', 'บันทึก', 'เพิ่มรายจ่าย'].includes(command)) {
-    await replyMessage(replyToken, createRecordExpenseFlexMessage());
+    console.log('💰 จดรายจ่าย triggered for user:', userId);
+    const flexMsg = createRecordExpenseFlexMessage();
+    const result = await replyMessage(replyToken, flexMsg);
+    console.log('💰 replyMessage result:', result);
+    if (!result) {
+      // ถ้า Flex Message ส่งไม่ได้ ให้ส่งข้อความธรรมดาแทน
+      console.log('💰 Flex failed, sending text instead');
+      await replyMessage(replyToken, {
+        type: 'text',
+        text: '💰 จดรายจ่าย\n\nพิมพ์ได้เลย เช่น:\n• ค่าไฟ 875\n• ค่าอาหาร 450\n• น้ำมันรถ 1000\n\nปั้นดาวจะจดและจัดประเภทให้อัตโนมัติค่ะ 👵'
+      });
+    }
     return;
   }
 
