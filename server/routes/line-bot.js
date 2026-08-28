@@ -135,7 +135,7 @@ function createRecordExpenseFlexMessage() {
         contents: [
           {
             type: 'button',
-            action: { type: 'message', text: 'จดรายจ่าย', label: '💰 จดรายจ่าย' },
+            action: { type: 'uri', uri: 'line://nv/chat', label: '💰 จดรายจ่าย' },
             style: 'primary',
             color: '#E91E63',
             height: 'lg',
