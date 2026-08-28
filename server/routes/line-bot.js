@@ -130,40 +130,6 @@ function createRecordExpenseFlexMessage() {
         paddingAll: '20px',
       },
     },
-    quickReply: {
-      items: [
-        {
-          type: 'action',
-          action: {
-            type: 'message',
-            label: '💰 จดรายจ่าย',
-            text: 'จดรายจ่าย',
-            inputOption: 'openKeyboard',
-            fillInText: ''
-          },
-        },
-        {
-          type: 'action',
-          action: { type: 'message', text: 'ค่าไฟ 875', label: '⚡ ค่าไฟ' },
-        },
-        {
-          type: 'action',
-          action: { type: 'message', text: 'ค่าอาหาร 450', label: '🍜 ค่าอาหาร' },
-        },
-        {
-          type: 'action',
-          action: { type: 'message', text: 'ค่าน้ำประปา 244', label: '💧 ค่าน้ำ' },
-        },
-        {
-          type: 'action',
-          action: { type: 'message', text: 'ค่าเน็ต 641', label: '🌐 ค่าเน็ต' },
-        },
-        {
-          type: 'action',
-          action: { type: 'message', text: 'น้ำมันรถ 1000', label: '🚗 น้ำมัน' },
-        },
-      ],
-    },
   };
 }
 
