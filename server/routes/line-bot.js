@@ -134,6 +134,16 @@ function createRecordExpenseFlexMessage() {
       items: [
         {
           type: 'action',
+          action: {
+            type: 'message',
+            label: '💰 จดรายจ่าย',
+            text: 'จดรายจ่าย',
+            inputOption: 'openKeyboard',
+            fillInText: ''
+          },
+        },
+        {
+          type: 'action',
           action: { type: 'message', text: 'ค่าไฟ 875', label: '⚡ ค่าไฟ' },
         },
         {
@@ -151,10 +161,6 @@ function createRecordExpenseFlexMessage() {
         {
           type: 'action',
           action: { type: 'message', text: 'น้ำมันรถ 1000', label: '🚗 น้ำมัน' },
-        },
-        {
-          type: 'action',
-          action: { type: 'message', text: 'อื่นๆ 500', label: '➕ อื่นๆ' },
         },
       ],
     },
