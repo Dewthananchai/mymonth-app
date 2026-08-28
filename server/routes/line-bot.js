@@ -129,20 +129,34 @@ function createRecordExpenseFlexMessage() {
         ],
         paddingAll: '20px',
       },
-      footer: {
-        type: 'box',
-        layout: 'vertical',
-        contents: [
-          {
-            type: 'button',
-            action: { type: 'message', text: 'จดรายจ่าย', label: '💰 จดรายจ่าย' },
-            style: 'primary',
-            color: '#E91E63',
-            height: 'lg',
-          },
-        ],
-        paddingAll: '15px',
-      },
+    },
+    quickReply: {
+      items: [
+        {
+          type: 'action',
+          action: { type: 'message', text: 'ค่าไฟ 875', label: '⚡ ค่าไฟ' },
+        },
+        {
+          type: 'action',
+          action: { type: 'message', text: 'ค่าอาหาร 450', label: '🍜 ค่าอาหาร' },
+        },
+        {
+          type: 'action',
+          action: { type: 'message', text: 'ค่าน้ำประปา 244', label: '💧 ค่าน้ำ' },
+        },
+        {
+          type: 'action',
+          action: { type: 'message', text: 'ค่าเน็ต 641', label: '🌐 ค่าเน็ต' },
+        },
+        {
+          type: 'action',
+          action: { type: 'message', text: 'น้ำมันรถ 1000', label: '🚗 น้ำมัน' },
+        },
+        {
+          type: 'action',
+          action: { type: 'message', text: 'อื่นๆ 500', label: '➕ อื่นๆ' },
+        },
+      ],
     },
   };
 }
@@ -431,27 +445,26 @@ async function handleTextMessage(event) {
             ],
             paddingAll: '15px',
           },
-          footer: {
-            type: 'box',
-            layout: 'vertical',
-            contents: [
-              {
-                type: 'button',
-                action: { type: 'message', text: 'จดรายจ่าย', label: '💰 จดรายจ่าย' },
-                style: 'primary',
-                color: '#E91E63',
-                height: 'md',
-              },
-              {
-                type: 'button',
-                action: { type: 'message', text: 'สรุป', label: '📊 ดูสรุป' },
-                style: 'secondary',
-                height: 'sm',
-                margin: 'sm',
-              },
-            ],
-            paddingAll: '15px',
-          },
+        },
+        quickReply: {
+          items: [
+            {
+              type: 'action',
+              action: { type: 'message', text: 'จดรายจ่าย', label: '💰 จดรายจ่าย' },
+            },
+            {
+              type: 'action',
+              action: { type: 'message', text: 'สรุป', label: '📊 ดูสรุป' },
+            },
+            {
+              type: 'action',
+              action: { type: 'message', text: 'งบ', label: '🐷 ดูงบประมาณ' },
+            },
+            {
+              type: 'action',
+              action: { type: 'message', text: 'รายการล่าสุด', label: '📋 รายการล่าสุด' },
+            },
+          ],
         },
       },
     ]);
