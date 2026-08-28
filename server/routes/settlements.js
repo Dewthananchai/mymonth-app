@@ -24,12 +24,15 @@ router.get('/summary', authenticateToken, (req, res) => {
 
     // Map member stats
     const userStats = {};
+    const currentMemberIds = new Set();
     members.forEach(m => {
+      currentMemberIds.add(m.id);
       userStats[m.id] = {
         user_id: m.id,
         user_name: m.full_name,
         avatar_url: m.avatar_url,
         promptpay_id: m.promptpay_id || '',
+        is_current_member: true,
         paid_total: 0,      // Amount this user paid up-front
         share_total: 0,     // Amount this user is responsible for
         net_balance: 0      // paid_total - share_total (>0: should receive, <0: owes)
@@ -43,9 +46,21 @@ router.get('/summary', authenticateToken, (req, res) => {
     sharedExpenses.forEach(exp => {
       totalSharedAmount += exp.amount;
       const payerId = exp.created_by;
-      if (userStats[payerId]) {
-        userStats[payerId].paid_total += exp.amount;
+      // If payer is not a current member (deleted/left room), add as phantom user
+      if (!userStats[payerId]) {
+        const payer = db.findById('users', payerId);
+        userStats[payerId] = {
+          user_id: payerId,
+          user_name: payer ? payer.full_name : '(สมาชิกที่ออกไปแล้ว)',
+          avatar_url: payer ? payer.avatar_url : '',
+          promptpay_id: payer ? (payer.promptpay_id || '') : '',
+          is_current_member: false,
+          paid_total: 0,
+          share_total: 0,
+          net_balance: 0
+        };
       }
+      userStats[payerId].paid_total += exp.amount;
 
       // Splits
       const splits = db.find('expense_splits', s => s.expense_id === exp.id);
@@ -86,7 +101,9 @@ router.get('/summary', authenticateToken, (req, res) => {
     const creditors = []; // Owed money (> 0)
     const debtors = [];   // Owes money (< 0)
 
+    // Only consider current members for debt calculation
     Object.values(userStats).forEach(st => {
+      if (!st.is_current_member) return; // Skip deleted/left members
       if (st.net_balance > 0.01) {
         creditors.push({ ...st, remaining: st.net_balance });
       } else if (st.net_balance < -0.01) {
@@ -145,10 +162,13 @@ router.get('/summary', authenticateToken, (req, res) => {
       if (debtor.remaining < 0.01) dIdx++;
     }
 
+    // Only include current members in user_summaries (exclude phantom/deleted users)
+    const currentUserSummaries = Object.values(userStats).filter(st => st.is_current_member);
+
     res.json({
       month: targetMonth,
       total_shared: totalSharedAmount,
-      user_summaries: Object.values(userStats),
+      user_summaries: currentUserSummaries,
       debts,
       expenses: expenseDetails
     });
