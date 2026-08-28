@@ -313,6 +313,7 @@ async function handleTextMessage(event) {
     const now = new Date();
     const month = now.getMonth();
     const year = now.getFullYear();
+    const targetMonth = `${year}-${String(month + 1).padStart(2, '0')}`;
 
     const expenses = db.find('expenses', e => {
       const d = new Date(e.expense_date);
@@ -325,9 +326,109 @@ async function handleTextMessage(event) {
 
     const monthName = now.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' });
 
+    // สร้างข้อความสรุป
+    let msg = `📊 สรุปเดือน ${monthName}\n\n`;
+    msg += `💰 ยอดรวม: ${totalAll.toLocaleString()} ฿\n`;
+    msg += `🔵 ส่วนตัว: ${totalPersonal.toLocaleString()} ฿\n`;
+    msg += `🟢 ร่วม: ${totalShared.toLocaleString()} ฿\n`;
+    msg += `📦 รายการทั้งหมด: ${expenses.length} รายการ\n`;
+
+    // รายการรายจ่ายร่วม
+    const sharedExpenses = expenses.filter(e => e.expense_type === 'shared');
+    if (sharedExpenses.length > 0) {
+      msg += `\n📋 รายจ่ายร่วม:\n`;
+      sharedExpenses.forEach(exp => {
+        msg += `• ${exp.category_icon || ''} ${exp.category_name}: ${Number(exp.amount).toLocaleString()} ฿\n`;
+      });
+    }
+
+    // คำนวณสรุปรายบุคคล
+    const members = db.find('users', u => u.room_code === user.room_code);
+    const userStats = {};
+    members.forEach(m => {
+      userStats[m.id] = {
+        name: m.full_name,
+        paid: 0,
+        share: 0
+      };
+    });
+
+    // เพิ่ม phantom user สำหรับสมาชิกที่ออกไปแล้ว
+    sharedExpenses.forEach(exp => {
+      const payerId = exp.created_by;
+      if (!userStats[payerId]) {
+        userStats[payerId] = {
+          name: '(สมาชิกที่ออกไปแล้ว)',
+          paid: 0,
+          share: 0,
+          isPhantom: true
+        };
+      }
+      userStats[payerId].paid += Number(exp.amount);
+    });
+
+    // คำนวณ share
+    sharedExpenses.forEach(exp => {
+      const splits = db.find('expense_splits', s => s.expense_id === exp.id);
+      splits.forEach(s => {
+        if (userStats[s.user_id]) {
+          userStats[s.user_id].share += Number(s.share_amount);
+        }
+      });
+    });
+
+    // คำนวณ net balance
+    const debts = [];
+    const currentMembers = [];
+    Object.entries(userStats).forEach(([id, stats]) => {
+      if (stats.isPhantom) return;
+      stats.net = Math.round((stats.paid - stats.share) * 100) / 100;
+      currentMembers.push({ id, ...stats });
+    });
+
+    // หา债权人และลูกหนี้
+    const creditors = currentMembers.filter(m => m.net > 0.01).sort((a, b) => b.net - a.net);
+    const debtors = currentMembers.filter(m => m.net < -0.01).sort((a, b) => a.net - b.net);
+
+    let cIdx = 0, dIdx = 0;
+    while (cIdx < creditors.length && dIdx < debtors.length) {
+      const amount = Math.min(creditors[cIdx].net, Math.abs(debtors[dIdx].net));
+      const rounded = Math.round(amount * 100) / 100;
+      if (rounded > 0) {
+        debts.push({
+          from: debtors[dIdx].name,
+          to: creditors[cIdx].name,
+          amount: rounded
+        });
+        creditors[cIdx].net -= rounded;
+        debtors[dIdx].net += rounded;
+      }
+      if (creditors[cIdx].net < 0.01) cIdx++;
+      if (debtors[dIdx].net > -0.01) dIdx++;
+    }
+
+    // แสดงสรุปรายบุคคล
+    if (currentMembers.some(m => m.paid > 0 || m.share > 0)) {
+      msg += `\n👥 สรุปรายบุคคล:\n`;
+      currentMembers.forEach(m => {
+        if (m.paid > 0 || m.share > 0) {
+          const status = m.paid > m.share ? `จ่ายเกิน +${(m.paid - m.share).toLocaleString()}` : m.paid < m.share ? `ยังขาด ${(m.share - m.paid).toLocaleString()}` : 'พอดี';
+          msg += `👤 ${m.name}: จ่าย ${m.paid.toLocaleString()} ฿ / ส่วนแบ่ง ${m.share.toLocaleString()} ฿ → ${status}\n`;
+        }
+      });
+    }
+
+    // แสดงหนี้
+    if (debts.length > 0) {
+      msg += `\n💸 ต้องโอนเงินคืน:\n`;
+      debts.forEach(d => {
+        msg += `👉 ${d.from} โอนให้ ${d.to} ${d.amount.toLocaleString()} ฿\n`;
+      });
+    }
+
     await replyMessage(replyToken, {
       type: 'text',
-      text: `📊 สรุปเดือน ${monthName}\n\n💰 ยอดรวม: ${totalAll.toLocaleString()} ฿\n🔵 ส่วนตัว: ${totalPersonal.toLocaleString()} ฿\n🟢 ร่วม: ${totalShared.toLocaleString()} ฿\n📦 รายการทั้งหมด: ${expenses.length} รายการ`,
+      text: msg,
     });
     return;
   }
