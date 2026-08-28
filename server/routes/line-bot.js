@@ -84,27 +84,119 @@ async function pushMessage(userId, messages) {
     console.error('LINE push error:', err);
     return false;
   }
+}// ===== Flex Message สำหรับจดรายจ่าย =====
+function createRecordExpenseFlexMessage() {
+  return {
+    type: 'flex',
+    altText: '💰 พิมพ์ได้เลย เช่น ค่าไฟ 500',
+    contents: {
+      type: 'bubble',
+      size: 'giga',
+      header: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          { type: 'text', text: '💰 จดรายจ่าย', weight: 'bold', size: 'xl', color: '#FFFFFF' },
+          { type: 'text', text: 'พิมพ์ได้เลย เช่น', size: 'sm', color: '#FFFFFFCC' },
+        ],
+        backgroundColor: '#E91E63',
+        paddingAll: '20px',
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          {
+            type: 'box', layout: 'vertical', contents: [
+              { type: 'text', text: '📌 ตัวอย่าง:', weight: 'bold', size: 'md', color: '#333333' },
+              { type: 'text', text: '• ค่าไฟ 875', size: 'sm', color: '#555555', margin: 'sm' },
+              { type: 'text', text: '• ค่าอาหารกลางวัน 450', size: 'sm', color: '#555555', margin: 'sm' },
+              { type: 'text', text: '• น้ำมันรถ 1000', size: 'sm', color: '#555555', margin: 'sm' },
+              { type: 'text', text: '• ค่าเน็ต 641', size: 'sm', color: '#555555', margin: 'sm' },
+            ],
+          },
+          { type: 'separator', margin: 'lg' },
+          {
+            type: 'box', layout: 'vertical', contents: [
+              { type: 'text', text: '💡 รูปแบบ:', weight: 'bold', size: 'md', color: '#333333', margin: 'lg' },
+              { type: 'text', text: 'คำอธิบาย + จำนวนเงิน', size: 'sm', color: '#555555', margin: 'sm' },
+              { type: 'text', text: 'เช่น "ค่าไฟ 875" หรือ "875 ค่าไฟ"', size: 'sm', color: '#888888', margin: 'sm' },
+            ],
+          },
+          {
+            type: 'text', text: 'ป้าจะจดและจัดประเภทให้อัตโนมัติค่ะ 👵', size: 'sm', color: '#E91E63', margin: 'lg', wrap: true, weight: 'bold',
+          },
+        ],
+        paddingAll: '20px',
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          {
+            type: 'button',
+            action: { type: 'message', text: 'จดรายจ่าย', label: '💰 จดรายจ่าย' },
+            style: 'primary',
+            color: '#E91E63',
+            height: 'lg',
+          },
+        ],
+        paddingAll: '15px',
+      },
+    },
+  };
 }
-
 
 // Webhook endpoint
 router.post('/webhook', async (req, res) => {
   // LINE ส่ง request มาแบบ array
   const events = Array.isArray(req.body?.events) ? req.body.events : [];
 
-  // ตอบ 200 ก่อน (LINE ต้องได้ response ภายใน 1 วินาที)
+  //ตอบ 200 ก่อน (LINE ต้องได้ response ภายใน 1 วินาที)
   res.status(200).json({ message: 'OK' });
 
-  // ประมวลผล event ทีละตัว
+  //ประมวลผล event ทีละตัว
   for (const event of events) {
     if (event.type === 'follow') {
       await handleFollowEvent(event);
+    }
+    if (event.type === 'postback') {
+      await handlePostbackEvent(event);
     }
     if (event.type === 'message' && event.message.type === 'text') {
       await handleTextMessage(event);
     }
   }
 });
+
+// ===== Postback Event =====
+async function handlePostbackEvent(event) {
+  const { replyToken, postback } = event;
+  const data = postback.data;
+
+  if (data === 'action=record_expense') {
+    await replyMessage(replyToken, createRecordExpenseFlexMessage());
+    return;
+  }
+
+  if (data === 'action=summary') {
+    const fakeEvent = {
+      ...event,
+      message: { type: 'text', text: 'สรุป' },
+    };
+    await handleTextMessage(fakeEvent);
+    return;
+  }
+
+  if (data === 'action=help') {
+    const fakeEvent = {
+      ...event,
+      message: { type: 'text', text: 'ช่วย' },
+    };
+    await handleTextMessage(fakeEvent);
+    return;
+  }
+}
 
 // ===== Greeting Message — เมื่อ user ใหม่เพิ่มเพื่อน LINE OA =====
 async function handleFollowEvent(event) {
@@ -297,12 +389,70 @@ async function handleTextMessage(event) {
 
   // ===== คำสั่งต่างๆ =====
 
+  // จดรายจ่าย - แสดง Flex Message
+  if (['จดรายจ่าย', 'จด', 'บันทึก', 'เพิ่มรายจ่าย'].includes(command)) {
+    await replyMessage(replyToken, createRecordExpenseFlexMessage());
+    return;
+  }
+
   // ช่วย / help
   if (['ช่วย', 'help', '?', 'คำสั่ง'].includes(command)) {
     await replyMessage(replyToken, [
       {
-        type: 'text',
-        text: `📱 MyMonth LINE Bot — คำสั่งที่ใช้ได้\n\n💰 บันทึกรายจ่าย:\nพิมพ์จำนวนเงิน ตามด้วยคำอธิบาย\nเช่น "ค่าอาหารกลางวัน 450"\nจะถามว่าเก็บเป็นส่วนตัวหรือร่วม\n\n📊 ดูสรุปเดือน:\nพิมพ์ "สรุป" หรือ "summary"\n\n🐷 ดูงบประมาณ:\nพิมพ์ "งบ" หรือ "budget"\n\n📋 ดูรายการล่าสุด:\nพิมพ์ "รายการล่าสุด"\n\n⚙️ ตั้งค่าข้อมูล:\nพิมพ์ "ตั้งค่า" เพื่ออัปเดตข้อมูลส่วนตัว\n\n❓ ความช่วยเหลือ:\nพิมพ์ "ช่วย" หรือ "help"`,
+        type: 'flex',
+        altText: '📱 คำสั่งที่ใช้ได้',
+        contents: {
+          type: 'bubble',
+          size: 'giga',
+          header: {
+            type: 'box',
+            layout: 'vertical',
+            contents: [
+              { type: 'text', text: '📱 คำสั่ง MyMonth', weight: 'bold', size: 'xl', color: '#FFFFFF' },
+            ],
+            backgroundColor: '#0D9488',
+            paddingAll: '20px',
+          },
+          body: {
+            type: 'box',
+            layout: 'vertical',
+            contents: [
+              { type: 'text', text: '💰 บันทึกรายจ่าย', weight: 'bold', size: 'md', color: '#333333' },
+              { type: 'text', text: 'พิมพ์ "จดรายจ่าย" หรือพิมพ์จำนวนเงิน\nเช่น "ค่าอาหารกลางวัน 450"', size: 'sm', color: '#666666', margin: 'sm', wrap: true },
+              { type: 'separator', margin: 'md' },
+              { type: 'text', text: '📊 ดูสรุปเดือน', weight: 'bold', size: 'md', color: '#333333', margin: 'md' },
+              { type: 'text', text: 'พิมพ์ "สรุป" หรือ "summary"', size: 'sm', color: '#666666', margin: 'sm', wrap: true },
+              { type: 'separator', margin: 'md' },
+              { type: 'text', text: '🐷 ดูงบประมาณ', weight: 'bold', size: 'md', color: '#333333', margin: 'md' },
+              { type: 'text', text: 'พิมพ์ "งบ" หรือ "budget"', size: 'sm', color: '#666666', margin: 'sm', wrap: true },
+              { type: 'separator', margin: 'md' },
+              { type: 'text', text: '📋 ดูรายการล่าสุด', weight: 'bold', size: 'md', color: '#333333', margin: 'md' },
+              { type: 'text', text: 'พิมพ์ "รายการล่าสุด"', size: 'sm', color: '#666666', margin: 'sm', wrap: true },
+            ],
+            paddingAll: '15px',
+          },
+          footer: {
+            type: 'box',
+            layout: 'vertical',
+            contents: [
+              {
+                type: 'button',
+                action: { type: 'message', text: 'จดรายจ่าย', label: '💰 จดรายจ่าย' },
+                style: 'primary',
+                color: '#E91E63',
+                height: 'md',
+              },
+              {
+                type: 'button',
+                action: { type: 'message', text: 'สรุป', label: '📊 ดูสรุป' },
+                style: 'secondary',
+                height: 'sm',
+                margin: 'sm',
+              },
+            ],
+            paddingAll: '15px',
+          },
+        },
       },
     ]);
     return;
@@ -890,21 +1040,59 @@ router.post('/setup-menu', async (req, res) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        size: { width: 2500, height: 843 },
+        size: { width: 2500, height: 1686 },
         selected: false,
         name: 'MyMonth Menu',
-        chatBarText: 'เปิด MyMonth',
+        chatBarText: 'พิมพ์คำสั่ง',
         areas: [
+          // Row 1 - ปุ่มใหญ่ จดรายจ่าย
           {
-            bounds: { x: 0, y: 0, width: 833, height: 843 },
-            action: { type: 'message', text: 'สรุป' },
+            bounds: { x: 0, y: 0, width: 1250, height: 843 },
+            action: { type: 'postback', data: 'action=record_expense', displayText: '💰 จดรายจ่าย' },
           },
+          // Row 1 - สรุป
           {
-            bounds: { x: 833, y: 0, width: 834, height: 843 },
+            bounds: { x: 1250, y: 0, width: 625, height: 421 },
+            action: { type: 'postback', data: 'action=summary', displayText: '📊 สรุป' },
+          },
+          // Row 1 - ประวัติ
+          {
+            bounds: { x: 1875, y: 0, width: 625, height: 421 },
+            action: { type: 'message', text: 'รายการล่าสุด' },
+          },
+          // Row 2 - ข้อมูล/งบ
+          {
+            bounds: { x: 1250, y: 421, width: 625, height: 422 },
+            action: { type: 'message', text: 'งบ' },
+          },
+          // Row 2 - รายการ
+          {
+            bounds: { x: 1875, y: 421, width: 625, height: 422 },
             action: { type: 'message', text: 'ช่วย' },
           },
+          // Row 3 - โปรโมชั่น
           {
-            bounds: { x: 1667, y: 0, width: 833, height: 843 },
+            bounds: { x: 0, y: 843, width: 833, height: 421 },
+            action: { type: 'uri', uri: LINE_CONFIG.frontendUrl },
+          },
+          // Row 3 - ประกาศ
+          {
+            bounds: { x: 833, y: 843, width: 417, height: 421 },
+            action: { type: 'message', text: 'สรุป' },
+          },
+          // Row 3 - ตั้งค่า
+          {
+            bounds: { x: 1250, y: 843, width: 417, height: 421 },
+            action: { type: 'message', text: 'ตั้งค่า' },
+          },
+          // Row 3 - Help
+          {
+            bounds: { x: 1667, y: 843, width: 417, height: 421 },
+            action: { type: 'postback', data: 'action=help', displayText: '❓ Help' },
+          },
+          // Row 4 - Bottom bar
+          {
+            bounds: { x: 0, y: 1264, width: 1250, height: 422 },
             action: { type: 'uri', uri: LINE_CONFIG.frontendUrl },
           },
         ],

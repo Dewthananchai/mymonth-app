@@ -1,0 +1,49 @@
+# fly.toml - Fly.io configuration for MyMonth App
+# https://fly.io/docs/reference/configuration/
+
+app = 'mymonth-app'
+primary_region = 'sin'
+
+[build]
+
+[env]
+  NODE_ENV = 'production'
+  PORT = '8080'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+  [http_service.concurrency]
+    type = 'connections'
+    hard_limit = 250
+    soft_limit = 200
+
+[[vm]]
+  cpu_kind = 'shared'
+  cpus = 1
+  memory_mb = 512
+
+# Health check
+  [http_service.checks]
+    [http_service.checks.health]
+      interval = '30s'
+      timeout = '5s'
+      grace_period = '10s'
+      method = 'GET'
+      path = '/api/health'
+
+# Secrets - set these with: fly secrets set KEY=VALUE
+# DATABASE_URL=...
+# LINE_CHANNEL_LOGIN_ID=...
+# LINE_CHANNEL_LOGIN_SECRET=...
+# LINE_CHANNEL_MESSAGING_ID=...
+# LINE_CHANNEL_MESSAGING_SECRET=...
+# LINE_CHANNEL_ACCESS_TOKEN=...
+# LINE_LIFF_ID=...
+# LINE_CALLBACK_URL=...
+# LINE_FRONTEND_URL=https://mymonth-app.fly.dev
