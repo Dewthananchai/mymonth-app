@@ -123,26 +123,26 @@ function createRecordExpenseFlexMessage() {
               { type: 'text', text: 'เช่น "ค่าไฟ 875" หรือ "875 ค่าไฟ"', size: 'sm', color: '#888888', margin: 'sm' },
             ],
           },
-        ],
-        paddingAll: '20px',
-      },
-      footer: {
-        type: 'box',
-        layout: 'vertical',
-        contents: [
           {
             type: 'text', text: 'ปั้นดาวจะจดและจัดประเภทให้อัตโนมัติค่ะ 👵', size: 'sm', color: '#E91E63', margin: 'lg', wrap: true, weight: 'bold',
           },
-          {
-            type: 'button',
-            action: { type: 'message', text: 'จดรายจ่าย', label: '💰 จดรายจ่าย' },
-            style: 'primary',
-            color: '#4CAF50',
-            height: 'lg',
-          },
         ],
-        paddingAll: '15px',
+        paddingAll: '20px',
       },
+    },
+    quickReply: {
+      items: [
+        {
+          type: 'action',
+          action: {
+            type: 'message',
+            label: '💰 จดรายจ่าย',
+            text: 'จดรายจ่าย',
+            inputOption: 'openKeyboard',
+            fillInText: ''
+          },
+        },
+      ],
     },
   };
 }
