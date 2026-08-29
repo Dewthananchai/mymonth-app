@@ -1,47 +1,24 @@
-// LIFF Expense Form — จดรายจ่ายผ่าน LIFF
-// ==========================================
-// Flow: กดปุ่ม "จดเลย" → เปิดฟอร์มนี้ → กรอกรายการ → กดบันทึก
-//       → liff.sendMessages() ส่งข้อความเข้าแชท → liff.closeWindow()
+// LIFF Expense Form — จดรายจ่ายผ่าน LIFF (ใช้ฟอร์มเดิม)
+// ============================================================
+// Flow: กดปุ่ม "จดเลย" → เปิด LIFF → โหลดฟอร์ม AddExpenseModal
+//       → กรอกข้อมูล → กดบันทึก → บันทึกลง database ตรงๆ
+//       → liff.closeWindow() ปิดกลับมาแชท
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
+import { AuthProvider, useAuth } from '../context/AuthContext';
+import { RoomProvider, useRoom } from '../context/RoomContext';
+import AddExpenseModal from './AddExpenseModal';
 
 const LIFF_ID = import.meta.env.VITE_LIFF_ID || '';
 const API_BASE = window.location.origin;
 
-// หมวดหมู่expense
-const CATEGORIES = [
-  { id: 'food', name: 'ค่าอาหาร', icon: '🍜', keywords: ['ข้าว', 'อาหาร', 'กินข้าว', 'กาแฟ', 'ขนม', 'น้ำ'] },
-  { id: 'transport', name: 'ค่าเดินทาง', icon: '🚗', keywords: ['ค่ารถ', 'ค่าน้ำมัน', 'ค่าแท็กซี่', 'ค่า BTS', 'ค่า MRT'] },
-  { id: 'utility', name: 'ค่าสาธารณูปโภค', icon: '⚡', keywords: ['ค่าไฟ', 'ค่าน้ำ', 'ค่าเน็ต', 'ค่าอินเทอร์เน็ต'] },
-  { id: 'entertainment', name: 'บันเทิง', icon: '🎬', keywords: ['ค่าเที่ยว', 'ค่าดูหนัง', 'ค่าเกม', 'Netflix'] },
-  { id: 'health', name: 'ค่ารักษาพยาบาล', icon: '💊', keywords: ['ค่าหมอ', 'ค่ายา', 'ค่าโรงพยาบาล'] },
-  { id: 'other', name: 'อื่นๆ', icon: '➕', keywords: [] },
-];
-
-export default function LiffExpenseForm() {
-  const [step, setStep] = useState('loading'); // loading | form | sending | success | error
-  const [lineProfile, setLineProfile] = useState(null);
-  const [description, setDescription] = useState('');
-  const [amount, setAmount] = useState('');
-  const [expenseType, setExpenseType] = useState('personal'); // personal | shared
+// Inner component ที่ใช้ Auth + Room context
+function LiffExpenseFormInner() {
+  const [step, setStep] = useState('loading'); // loading | form | success | error
   const [error, setError] = useState('');
-  const [matchedCategory, setMatchedCategory] = useState(null);
-
-  // ตรวจสอบหมวดหมู่อัตโนมัติ
-  useEffect(() => {
-    if (!description) {
-      setMatchedCategory(null);
-      return;
-    }
-    const descLower = description.toLowerCase();
-    for (const cat of CATEGORIES) {
-      if (cat.keywords.some(kw => descLower.includes(kw))) {
-        setMatchedCategory(cat);
-        return;
-      }
-    }
-    setMatchedCategory(CATEGORIES.find(c => c.id === 'other'));
-  }, [description]);
+  const [lineProfile, setLineProfile] = useState(null);
+  const { user, loading: authLoading } = useAuth();
+  const { fetchExpenses } = useRoom();
 
   // LIFF Init
   useEffect(() => {
@@ -65,7 +42,41 @@ export default function LiffExpenseForm() {
 
         const profile = await window.liff.getProfile();
         setLineProfile(profile);
-        setStep('form');
+
+        // Login user เข้าระบบ
+        try {
+          const res = await fetch(`${API_BASE}/api/line/liff-login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              lineUserId: profile.userId,
+              displayName: profile.displayName,
+              pictureUrl: profile.pictureUrl || '',
+            }),
+          });
+
+          const data = await res.json();
+
+          if (data.token && data.user) {
+            localStorage.setItem('auth_token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+
+            if (!data.user.room_code) {
+              // ยังไม่มีห้อง → ไป onboarding
+              window.location.href = '/liff';
+              return;
+            }
+
+            // มีห้องแล้ว → แสดงฟอร์ม
+            setStep('form');
+          } else {
+            setError(data.error || 'Login failed');
+            setStep('error');
+          }
+        } catch (err) {
+          setError('ไม่สามารถเชื่อมต่อ server ได้');
+          setStep('error');
+        }
       } catch (err) {
         setError(err.message || 'LIFF init failed');
         setStep('error');
@@ -78,44 +89,26 @@ export default function LiffExpenseForm() {
     document.head.appendChild(script);
   }, []);
 
-  // ส่งข้อความเข้าแชท
-  const handleSubmit = useCallback(async () => {
-    if (!description.trim()) {
-      setError('กรุณากรอกรายการ');
-      return;
-    }
-    if (!amount || parseFloat(amount) <= 0) {
-      setError('กรุณากรอกจำนวนเงิน');
-      return;
-    }
-
-    setError('');
-    setStep('sending');
-
+  // ปิด LIFF
+  const handleClose = () => {
     try {
-      // สร้างข้อความในรูปแบบที่ webhook parse ได้
-      const categoryText = matchedCategory ? ` [${matchedCategory.name}]` : '';
-      const messageText = `${description.trim()} ${amount}${categoryText}`;
-
-      // ส่งข้อความเข้าแชท
-      await window.liff.sendMessages([
-        {
-          type: 'text',
-          text: messageText,
-        },
-      ]);
-
-      // ปิด LIFF window
       window.liff.closeWindow();
-    } catch (err) {
-      console.error('sendMessages error:', err);
-      setError('ไม่สามารถส่งข้อความได้: ' + err.message);
-      setStep('error');
+    } catch {
+      window.history.back();
     }
-  }, [description, amount, matchedCategory]);
+  };
+
+  // บันทึกสำเร็จ → ปิด LIFF
+  const handleSaveSuccess = async () => {
+    setStep('success');
+    // รอให้ fetchExpenses เสร็จก่อน
+    setTimeout(() => {
+      handleClose();
+    }, 1500);
+  };
 
   // ===== Loading =====
-  if (step === 'loading') {
+  if (step === 'loading' || authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 to-rose-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-3xl shadow-xl p-8 max-w-sm w-full text-center">
@@ -149,7 +142,7 @@ export default function LiffExpenseForm() {
           <div className="w-20 h-20 bg-red-100 rounded-3xl flex items-center justify-center text-4xl mx-auto mb-4">❌</div>
           <h2 className="text-xl font-bold text-slate-800 mb-2">เกิดข้อผิดพลาด</h2>
           <p className="text-slate-500 text-sm mb-4">{error}</p>
-          <button onClick={() => window.liff?.closeWindow()}
+          <button onClick={handleClose}
             className="bg-slate-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-slate-600 transition">
             ปิด
           </button>
@@ -158,121 +151,24 @@ export default function LiffExpenseForm() {
     );
   }
 
-  // ===== Sending =====
-  if (step === 'sending') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-3xl shadow-xl p-8 max-w-sm w-full text-center">
-          <div className="w-20 h-20 bg-blue-100 rounded-3xl flex items-center justify-center text-4xl mx-auto mb-4 animate-pulse">📤</div>
-          <h2 className="text-xl font-bold text-slate-800 mb-2">กำลังส่ง...</h2>
-          <p className="text-slate-500 text-sm">กรุณารอสักครู่</p>
-        </div>
-      </div>
-    );
-  }
-
-  // ===== Form =====
+  // ===== Form (AddExpenseModal) =====
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-rose-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl shadow-xl max-w-sm w-full overflow-hidden">
-
-        {/* Header */}
-        <div className="bg-gradient-to-br from-pink-500 to-rose-500 p-6 text-center text-white">
-          {lineProfile?.pictureUrl && (
-            <img src={lineProfile.pictureUrl} alt="" className="w-16 h-16 rounded-full mx-auto mb-3 border-2 border-white/50 shadow-lg" />
-          )}
-          <h2 className="text-lg font-bold">💰 จดรายจ่าย</h2>
-          <p className="text-sm text-white/80 mt-1">{lineProfile?.displayName || 'ผู้ใช้'}</p>
-        </div>
-
-        <div className="p-6 space-y-4">
-
-          {/* หมวดหมู่ที่จับคู่ได้ */}
-          {matchedCategory && (
-            <div className="bg-pink-50 border border-pink-200 rounded-xl p-3 text-center">
-              <span className="text-2xl">{matchedCategory.icon}</span>
-              <p className="text-sm font-semibold text-pink-700 mt-1">{matchedCategory.name}</p>
-            </div>
-          )}
-
-          {/* รายละเอียด */}
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">รายละเอียด</label>
-            <input
-              type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="เช่น ค่าไฟ, ค่าอาหารกลางวัน"
-              className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:ring-0 outline-none transition"
-              autoFocus
-            />
-          </div>
-
-          {/* จำนวนเงิน */}
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">จำนวนเงิน (฿)</label>
-            <input
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="0"
-              min="0"
-              step="0.01"
-              className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:ring-0 outline-none text-xl font-bold text-center transition"
-            />
-          </div>
-
-          {/* ประเภทรายจ่าย */}
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">ประเภท</label>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setExpenseType('personal')}
-                className={`flex-1 py-3 rounded-xl font-semibold transition ${
-                  expenseType === 'personal'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                🔵 ส่วนตัว
-              </button>
-              <button
-                onClick={() => setExpenseType('shared')}
-                className={`flex-1 py-3 rounded-xl font-semibold transition ${
-                  expenseType === 'shared'
-                    ? 'bg-green-500 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                🟢 ร่วม
-              </button>
-            </div>
-          </div>
-
-          {/* Error */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-2 rounded-xl">{error}</div>
-          )}
-
-          {/* ปุ่มบันทึก */}
-          <button
-            onClick={handleSubmit}
-            disabled={!description.trim() || !amount || parseFloat(amount) <= 0}
-            className="w-full py-4 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-xl font-bold text-lg hover:from-pink-600 hover:to-rose-600 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-pink-500/30"
-          >
-            💰 บันทึกรายจ่าย
-          </button>
-
-          {/* ปุ่มยกเลิก */}
-          <button
-            onClick={() => window.liff?.closeWindow()}
-            className="w-full py-3 text-slate-500 font-semibold hover:text-slate-700 transition"
-          >
-            ยกเลิก
-          </button>
-
-        </div>
-      </div>
+    <div className="min-h-screen bg-slate-100">
+      <AddExpenseModal
+        isOpen={true}
+        onClose={handleSaveSuccess}
+      />
     </div>
+  );
+}
+
+// Wrapper ที่มี Auth + Room context
+export default function LiffExpenseForm() {
+  return (
+    <AuthProvider>
+      <RoomProvider>
+        <LiffExpenseFormInner />
+      </RoomProvider>
+    </AuthProvider>
   );
 }

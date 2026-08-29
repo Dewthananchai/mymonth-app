@@ -113,7 +113,10 @@ async function handlePostbackEvent(event) {
 
   if (data === 'action=record_expense') {
     const frontendUrl = LINE_CONFIG.frontendUrl || 'https://mymonth-app.onrender.com';
-    const liffExpenseUrl = `${frontendUrl}/liff-expense`;
+    const liffId = LINE_CONFIG.liffId || process.env.VITE_LIFF_ID || '';
+    const liffExpenseUrl = liffId 
+      ? `https://liff.line.me/${liffId}?redirectUri=${encodeURIComponent(frontendUrl + '/liff-expense')}`
+      : `${frontendUrl}/liff-expense`;
     await replyMessage(replyToken, {
       type: 'flex',
       altText: '💰 กดปุ่มเพื่อจดรายจ่าย',
@@ -356,10 +359,14 @@ async function handleTextMessage(event) {
 
   // ===== คำสั่งต่างๆ =====
 
-  // จดรายจ่าย - ส่งปุ่มเปิด LIFF Expense Form
+  // จดรายจ่าย - ส่งปุ่มเปิด LIFF Expense Form (ฟอร์มเดิม)
   if (['จดรายจ่าย', 'จด', 'บันทึก', 'เพิ่มรายจ่าย'].includes(command)) {
     const frontendUrl = LINE_CONFIG.frontendUrl || 'https://mymonth-app.onrender.com';
-    const liffExpenseUrl = `${frontendUrl}/liff-expense`;
+    const liffId = LINE_CONFIG.liffId || process.env.VITE_LIFF_ID || '';
+    // ใช้ LIFF URL ตรงๆ เพื่อเปิดใน LINE
+    const liffExpenseUrl = liffId 
+      ? `https://liff.line.me/${liffId}?redirectUri=${encodeURIComponent(frontendUrl + '/liff-expense')}`
+      : `${frontendUrl}/liff-expense`;
     await replyMessage(replyToken, {
       type: 'flex',
       altText: '💰 กดปุ่มเพื่อจดรายจ่าย',
