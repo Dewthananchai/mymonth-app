@@ -112,9 +112,36 @@ async function handlePostbackEvent(event) {
   const data = postback.data;
 
   if (data === 'action=record_expense') {
+    const frontendUrl = LINE_CONFIG.frontendUrl || 'https://mymonth-app.onrender.com';
+    const liffExpenseUrl = `${frontendUrl}/liff-expense`;
     await replyMessage(replyToken, {
-      type: 'text',
-      text: '💰 จดรายจ่าย\n\nพิมพ์ได้เลย เช่น:\n• ค่าไฟ 875\n• ค่าอาหารกลางวัน 450\n• น้ำมันรถ 1000\n• ค่าเน็ต 641\n\n💡 รูปแบบ: คำอธิบาย + จำนวนเงิน\n\nปั้นดาวจะจดและจัดประเภทให้อัตโนมัติค่ะ 👵'
+      type: 'flex',
+      altText: '💰 กดปุ่มเพื่อจดรายจ่าย',
+      contents: {
+        type: 'bubble',
+        body: {
+          type: 'box',
+          layout: 'vertical',
+          spacing: 'md',
+          contents: [
+            { type: 'text', text: '💰 จดรายจ่าย', weight: 'bold', size: 'lg' },
+            { type: 'text', text: 'กดปุ่มด้านล่างเพื่อเปิดฟอร์มบันทึกรายจ่าย', wrap: true, size: 'sm', color: '#666666' },
+          ],
+        },
+        footer: {
+          type: 'box',
+          layout: 'vertical',
+          contents: [
+            {
+              type: 'button',
+              action: { type: 'uri', uri: liffExpenseUrl, label: '💰 จดเลย' },
+              style: 'primary',
+              color: '#E91E63',
+              height: 'sm',
+            },
+          ],
+        },
+      },
     });
     return;
   }
@@ -329,11 +356,38 @@ async function handleTextMessage(event) {
 
   // ===== คำสั่งต่างๆ =====
 
-  // จดรายจ่าย - แสดงข้อความธรรมดา
+  // จดรายจ่าย - ส่งปุ่มเปิด LIFF Expense Form
   if (['จดรายจ่าย', 'จด', 'บันทึก', 'เพิ่มรายจ่าย'].includes(command)) {
+    const frontendUrl = LINE_CONFIG.frontendUrl || 'https://mymonth-app.onrender.com';
+    const liffExpenseUrl = `${frontendUrl}/liff-expense`;
     await replyMessage(replyToken, {
-      type: 'text',
-      text: '💰 จดรายจ่าย\n\nพิมพ์ได้เลย เช่น:\n• ค่าไฟ 875\n• ค่าอาหารกลางวัน 450\n• น้ำมันรถ 1000\n• ค่าเน็ต 641\n\n💡 รูปแบบ: คำอธิบาย + จำนวนเงิน\n\nปั้นดาวจะจดและจัดประเภทให้อัตโนมัติค่ะ 👵'
+      type: 'flex',
+      altText: '💰 กดปุ่มเพื่อจดรายจ่าย',
+      contents: {
+        type: 'bubble',
+        body: {
+          type: 'box',
+          layout: 'vertical',
+          spacing: 'md',
+          contents: [
+            { type: 'text', text: '💰 จดรายจ่าย', weight: 'bold', size: 'lg' },
+            { type: 'text', text: 'กดปุ่มด้านล่างเพื่อเปิดฟอร์มบันทึกรายจ่าย', wrap: true, size: 'sm', color: '#666666' },
+          ],
+        },
+        footer: {
+          type: 'box',
+          layout: 'vertical',
+          contents: [
+            {
+              type: 'button',
+              action: { type: 'uri', uri: liffExpenseUrl, label: '💰 จดเลย' },
+              style: 'primary',
+              color: '#E91E63',
+              height: 'sm',
+            },
+          ],
+        },
+      },
     });
     return;
   }
