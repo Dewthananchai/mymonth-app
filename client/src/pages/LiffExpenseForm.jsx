@@ -22,7 +22,17 @@ function LiffExpenseFormInner() {
 
   // LIFF Init
   useEffect(() => {
+    // ตรวจสอบว่าเปิดจาก LINE หรือ browser
+    const isInLiff = window.location.href.includes('liff.line.me') || window.location.search.includes('liff=true');
+    
     if (!LIFF_ID) {
+      // ไม่มี LIFF_ID → ลองใช้ localStorage (จาก liff-login)
+      const savedUser = localStorage.getItem('user');
+      const savedToken = localStorage.getItem('auth_token');
+      if (savedUser && savedToken) {
+        setStep('form');
+        return;
+      }
       setError('LIFF_ID ไม่ได้ตั้งค่า');
       setStep('error');
       return;
@@ -35,9 +45,25 @@ function LiffExpenseFormInner() {
       try {
         await window.liff.init({ liffId: LIFF_ID });
 
+        // ตรวจสอบว่าอยู่ใน LINE หรือไม่
+        const isInLiffApp = window.liff.isInClient();
+        
         if (!window.liff.isLoggedIn()) {
-          window.liff.login();
-          return;
+          if (isInLiffApp) {
+            window.liff.login();
+            return;
+          } else {
+            // เปิดจาก browser → ลองใช้ localStorage
+            const savedUser = localStorage.getItem('user');
+            const savedToken = localStorage.getItem('auth_token');
+            if (savedUser && savedToken) {
+              setStep('form');
+              return;
+            }
+            setError('กรุณาเปิดจาก LINE app');
+            setStep('error');
+            return;
+          }
         }
 
         const profile = await window.liff.getProfile();
