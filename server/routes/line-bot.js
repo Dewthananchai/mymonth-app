@@ -474,7 +474,7 @@ async function handleTextMessage(event) {
     });
 
     const totalAll = expenses.reduce((s, e) => s + Number(e.amount), 0);
-    const totalPersonal = expenses.filter(e => e.expense_type === 'personal').reduce((s, e) => s + Number(e.amount), 0);
+    const myPersonal = expenses.filter(e => e.expense_type === 'personal' && e.created_by === user.id).reduce((s, e) => s + Number(e.amount), 0);
     const totalShared = expenses.filter(e => e.expense_type === 'shared').reduce((s, e) => s + Number(e.amount), 0);
 
     const monthName = now.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' });
@@ -482,17 +482,27 @@ async function handleTextMessage(event) {
     // สร้างข้อความสรุป
     let msg = `📊 สรุปเดือน ${monthName}\n\n`;
     msg += `💰 ยอดรวม: ${totalAll.toLocaleString()} ฿\n`;
-    msg += `🔵 ส่วนตัว: ${totalPersonal.toLocaleString()} ฿\n`;
+    msg += `🔵 ส่วนตัว: ${myPersonal.toLocaleString()} ฿\n`;
     msg += `🟢 ร่วม: ${totalShared.toLocaleString()} ฿\n`;
-    msg += `📦 รายการทั้งหมด: ${expenses.length} รายการ\n`;
 
-    // รายการรายจ่ายร่วม
+    // รายการรายจ่ายร่วม (รวมตามชื่อหมวด)
     const sharedExpenses = expenses.filter(e => e.expense_type === 'shared');
     if (sharedExpenses.length > 0) {
       msg += `\n📋 รายจ่ายร่วม:\n`;
+      // รวมตามชื่อหมวด (ไม่ใช่ category_id)
+      const categoryTotals = {};
       sharedExpenses.forEach(exp => {
-        msg += `• ${exp.category_icon || ''} ${exp.category_name}: ${Number(exp.amount).toLocaleString()} ฿\n`;
+        const key = exp.category_name || 'อื่นๆ';
+        if (!categoryTotals[key]) {
+          categoryTotals[key] = { name: exp.category_name, icon: exp.category_icon, total: 0 };
+        }
+        categoryTotals[key].total += Number(exp.amount);
       });
+      Object.values(categoryTotals)
+        .sort((a, b) => b.total - a.total)
+        .forEach(cat => {
+          msg += `• ${cat.icon || ''} ${cat.name}: ${cat.total.toLocaleString()} ฿\n`;
+        });
     }
 
     // คำนวณสรุปรายบุคคล

@@ -44,16 +44,19 @@ function LiffExpenseFormInner() {
     script.onload = async () => {
       try {
         await window.liff.init({ liffId: LIFF_ID });
+        console.log('LIFF init success, isInClient:', window.liff.isInClient(), 'isLoggedIn:', window.liff.isLoggedIn());
 
         // ตรวจสอบว่าอยู่ใน LINE หรือไม่
         const isInLiffApp = window.liff.isInClient();
         
         if (!window.liff.isLoggedIn()) {
-          if (isInLiffApp) {
+          // ลอง login ผ่าน LIFF ก่อนเสมอ (ไม่สนว่า isInClient จะ return อะไร)
+          try {
             window.liff.login();
             return;
-          } else {
-            // เปิดจาก browser → ลองใช้ localStorage
+          } catch (loginErr) {
+            console.error('LIFF login failed:', loginErr);
+            // ถ้า LIFF login ไม่ได้ → ลอง localStorage fallback
             const savedUser = localStorage.getItem('user');
             const savedToken = localStorage.getItem('auth_token');
             if (savedUser && savedToken) {
