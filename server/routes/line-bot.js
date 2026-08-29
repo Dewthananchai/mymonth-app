@@ -84,73 +84,7 @@ async function pushMessage(userId, messages) {
     console.error('LINE push error:', err);
     return false;
   }
-}// ===== Flex Message สำหรับจดรายจ่าย =====
-// ใช้ line://nv/chatKeyboard (ทดสอบแล้วใช้งานได้จริง)
-function createRecordExpenseFlexMessage() {
-  return {
-    type: 'flex',
-    altText: '💰 พิมพ์ได้เลย เช่น ค่าไฟ 500',
-    contents: {
-      type: 'bubble',
-      body: {
-        type: 'box',
-        layout: 'vertical',
-        spacing: 'md',
-        contents: [
-          {
-            type: 'text',
-            text: '💰 พิมพ์ได้เลย เช่น',
-            wrap: true,
-            size: 'md',
-          },
-          {
-            type: 'text',
-            text: '- ค่าไฟ 875\n- ค่าอาหารกลางวัน 450\n- น้ำมันรถ 1000\n- ค่าเน็ต 641',
-            wrap: true,
-            size: 'sm',
-            color: '#666666',
-          },
-          {
-            type: 'text',
-            text: '💡 รูปแบบ: คำอธิบาย + จำนวนเงิน',
-            wrap: true,
-            size: 'sm',
-            color: '#888888',
-            margin: 'sm',
-          },
-          {
-            type: 'text',
-            text: 'ปั้นดาวจะจดและจัดประเภทให้อัตโนมัติค่ะ 👵',
-            wrap: true,
-            size: 'sm',
-            color: '#E91E63',
-            margin: 'sm',
-            weight: 'bold',
-          },
-        ],
-      },
-      footer: {
-        type: 'box',
-        layout: 'vertical',
-        contents: [
-          {
-            type: 'button',
-            action: {
-              type: 'uri',
-              label: '💰 จดรายจ่าย',
-              uri: 'line://nv/chatKeyboard',
-            },
-            style: 'primary',
-            color: '#E91E63',
-            height: 'sm',
-          },
-        ],
-      },
-    },
-  };
-}
-
-// Webhook endpoint
+}// Webhook endpoint
 router.post('/webhook', async (req, res) => {
   // LINE ส่ง request มาแบบ array
   const events = Array.isArray(req.body?.events) ? req.body.events : [];
@@ -178,7 +112,10 @@ async function handlePostbackEvent(event) {
   const data = postback.data;
 
   if (data === 'action=record_expense') {
-    await replyMessage(replyToken, createRecordExpenseFlexMessage());
+    await replyMessage(replyToken, {
+      type: 'text',
+      text: '💰 จดรายจ่าย\n\nพิมพ์ได้เลย เช่น:\n• ค่าไฟ 875\n• ค่าอาหารกลางวัน 450\n• น้ำมันรถ 1000\n• ค่าเน็ต 641\n\n💡 รูปแบบ: คำอธิบาย + จำนวนเงิน\n\nปั้นดาวจะจดและจัดประเภทให้อัตโนมัติค่ะ 👵'
+    });
     return;
   }
 
@@ -392,20 +329,12 @@ async function handleTextMessage(event) {
 
   // ===== คำสั่งต่างๆ =====
 
-  // จดรายจ่าย - แสดง Flex Message
+  // จดรายจ่าย - แสดงข้อความธรรมดา
   if (['จดรายจ่าย', 'จด', 'บันทึก', 'เพิ่มรายจ่าย'].includes(command)) {
-    console.log('💰 จดรายจ่าย triggered for user:', userId);
-    const flexMsg = createRecordExpenseFlexMessage();
-    const result = await replyMessage(replyToken, flexMsg);
-    console.log('💰 replyMessage result:', result);
-    if (!result) {
-      // ถ้า Flex Message ส่งไม่ได้ ให้ส่งข้อความธรรมดาแทน
-      console.log('💰 Flex failed, sending text instead');
-      await replyMessage(replyToken, {
-        type: 'text',
-        text: '💰 จดรายจ่าย\n\nพิมพ์ได้เลย เช่น:\n• ค่าไฟ 875\n• ค่าอาหาร 450\n• น้ำมันรถ 1000\n\nปั้นดาวจะจดและจัดประเภทให้อัตโนมัติค่ะ 👵'
-      });
-    }
+    await replyMessage(replyToken, {
+      type: 'text',
+      text: '💰 จดรายจ่าย\n\nพิมพ์ได้เลย เช่น:\n• ค่าไฟ 875\n• ค่าอาหารกลางวัน 450\n• น้ำมันรถ 1000\n• ค่าเน็ต 641\n\n💡 รูปแบบ: คำอธิบาย + จำนวนเงิน\n\nปั้นดาวจะจดและจัดประเภทให้อัตโนมัติค่ะ 👵'
+    });
     return;
   }
 
