@@ -85,49 +85,49 @@ async function pushMessage(userId, messages) {
     return false;
   }
 }// ===== Flex Message สำหรับจดรายจ่าย =====
+// ใช้ line://nv/chatKeyboard (ทดสอบแล้วใช้งานได้จริง)
 function createRecordExpenseFlexMessage() {
   return {
     type: 'flex',
     altText: '💰 พิมพ์ได้เลย เช่น ค่าไฟ 500',
     contents: {
       type: 'bubble',
-      size: 'giga',
-      header: {
-        type: 'box',
-        layout: 'vertical',
-        contents: [
-          { type: 'text', text: '💰 จดรายจ่าย', weight: 'bold', size: 'xl', color: '#FFFFFF' },
-          { type: 'text', text: 'พิมพ์ได้เลย เช่น', size: 'sm', color: '#FFFFFFCC' },
-        ],
-        backgroundColor: '#E91E63',
-        paddingAll: '20px',
-      },
       body: {
         type: 'box',
         layout: 'vertical',
+        spacing: 'md',
         contents: [
           {
-            type: 'box', layout: 'vertical', contents: [
-              { type: 'text', text: '📌 ตัวอย่าง:', weight: 'bold', size: 'md', color: '#333333' },
-              { type: 'text', text: '• ค่าไฟ 875', size: 'sm', color: '#555555', margin: 'sm' },
-              { type: 'text', text: '• ค่าอาหารกลางวัน 450', size: 'sm', color: '#555555', margin: 'sm' },
-              { type: 'text', text: '• น้ำมันรถ 1000', size: 'sm', color: '#555555', margin: 'sm' },
-              { type: 'text', text: '• ค่าเน็ต 641', size: 'sm', color: '#555555', margin: 'sm' },
-            ],
-          },
-          { type: 'separator', margin: 'lg' },
-          {
-            type: 'box', layout: 'vertical', contents: [
-              { type: 'text', text: '💡 รูปแบบ:', weight: 'bold', size: 'md', color: '#333333', margin: 'lg' },
-              { type: 'text', text: 'คำอธิบาย + จำนวนเงิน', size: 'sm', color: '#555555', margin: 'sm' },
-              { type: 'text', text: 'เช่น "ค่าไฟ 875" หรือ "875 ค่าไฟ"', size: 'sm', color: '#888888', margin: 'sm' },
-            ],
+            type: 'text',
+            text: '💰 พิมพ์ได้เลย เช่น',
+            wrap: true,
+            size: 'md',
           },
           {
-            type: 'text', text: 'ปั้นดาวจะจดและจัดประเภทให้อัตโนมัติค่ะ 👵', size: 'sm', color: '#E91E63', margin: 'lg', wrap: true, weight: 'bold',
+            type: 'text',
+            text: '- ค่าไฟ 875\n- ค่าอาหารกลางวัน 450\n- น้ำมันรถ 1000\n- ค่าเน็ต 641',
+            wrap: true,
+            size: 'sm',
+            color: '#666666',
+          },
+          {
+            type: 'text',
+            text: '💡 รูปแบบ: คำอธิบาย + จำนวนเงิน',
+            wrap: true,
+            size: 'sm',
+            color: '#888888',
+            margin: 'sm',
+          },
+          {
+            type: 'text',
+            text: 'ปั้นดาวจะจดและจัดประเภทให้อัตโนมัติค่ะ 👵',
+            wrap: true,
+            size: 'sm',
+            color: '#E91E63',
+            margin: 'sm',
+            weight: 'bold',
           },
         ],
-        paddingAll: '20px',
       },
       footer: {
         type: 'box',
@@ -135,13 +135,16 @@ function createRecordExpenseFlexMessage() {
         contents: [
           {
             type: 'button',
-            action: { type: 'uri', uri: 'line://nv/chat', label: '💰 จดรายจ่าย' },
+            action: {
+              type: 'uri',
+              label: '💰 จดรายจ่าย',
+              uri: 'line://nv/chatKeyboard',
+            },
             style: 'primary',
             color: '#E91E63',
-            height: 'lg',
+            height: 'sm',
           },
         ],
-        paddingAll: '15px',
       },
     },
   };
