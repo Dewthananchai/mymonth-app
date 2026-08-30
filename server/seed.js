@@ -1,7 +1,34 @@
 import bcrypt from 'bcryptjs';
 import { db } from './db.js';
 
+// Migration: Update category names from old to new
+async function migrateCategoryNames() {
+  const updates = [
+    { oldName: 'ค่าไฟ', newName: 'ค่าไฟฟ้า' }
+  ];
+
+  for (const { oldName, newName } of updates) {
+    const categories = db.find('categories', c => c.name === oldName);
+    for (const cat of categories) {
+      db.update('categories', cat.id, { name: newName });
+      console.log(`🔄 Migrated category: ${oldName} → ${newName}`);
+    }
+
+    // Also update expenses with this category name
+    const expenses = db.find('expenses', e => e.category_name === oldName);
+    for (const exp of expenses) {
+      db.update('expenses', exp.id, { category_name: newName });
+    }
+    if (expenses.length > 0) {
+      console.log(`🔄 Migrated ${expenses.length} expenses: ${oldName} → ${newName}`);
+    }
+  }
+}
+
 export async function seedDatabase(force = false) {
+  // Migration: Update category names
+  await migrateCategoryNames();
+
   // Always ensure Super Admin exists
   const superAdmin = db.findOne('users', u => u.role === 'SuperAdmin');
   if (!superAdmin) {
