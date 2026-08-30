@@ -1,0 +1,15 @@
+services:
+  - name: mymonth
+    docker:
+      dockerfile: Dockerfile
+    ports:
+      - port: 8080
+        protocol: http
+    env:
+      - name: NODE_ENV
+        value: production
+      - name: PORT
+        value: "8080"
+    scaling:
+      min: 0
+      max: 1
