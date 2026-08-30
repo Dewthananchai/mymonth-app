@@ -144,18 +144,19 @@ export default function BillView() {
 
         {/* Action Buttons (only for printable bill modes) */}
         {isPrintMode && (
-          <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 w-full md:w-auto justify-end">
             <button
               onClick={handlePrint}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition active:scale-95"
+              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition active:scale-95"
               title="พิมพ์บิล"
             >
               <Printer className="w-4 h-4 text-slate-600" />
-              <span>📄 ปริ้นบิล</span>
+              <span className="hidden sm:inline">📄 ปริ้นบิล</span>
+              <span className="sm:hidden">ปริ้น</span>
             </button>
             <button
               onClick={handleDownloadPdf}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition active:scale-95"
+              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition active:scale-95"
               title="ดาวน์โหลด PDF"
             >
               <Download className="w-4 h-4 text-slate-600" />
@@ -164,15 +165,16 @@ export default function BillView() {
             <button
               onClick={handleCopyAsImage}
               disabled={copyingImage}
-              className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition active:scale-95 disabled:opacity-50"
+              className="flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition active:scale-95 disabled:opacity-50"
               title="คัดลอกบิลเป็นรูปภาพ PNG"
             >
               <Share2 className="w-4 h-4" />
-              <span>{copyingImage ? 'กำลังคัดลอก...' : '📋 คัดลอกบิลเป็นรูปภาพ'}</span>
+              <span className="hidden sm:inline">{copyingImage ? 'กำลังคัดลอก...' : '📋 คัดลอกบิลเป็นรูปภาพ'}</span>
+              <span className="sm:hidden">{copyingImage ? 'กำลัง...' : '📋 คัดลอก'}</span>
             </button>
             <button
               onClick={handleCopyText}
-              className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium transition active:scale-95"
+              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium transition active:scale-95"
               title="คัดลอกข้อความสรุป"
             >
               {copyingText ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}

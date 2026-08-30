@@ -142,7 +142,7 @@ export default function DashboardPage({ onNavigateTab, onOpenAddExpense }) {
           <p className="text-xs text-slate-500 mt-1">สรุปภาพรวมค่าใช้จ่ายส่วนตัวและส่วนกลาง</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
           <button
             onClick={onOpenAddExpense}
             className="hidden sm:flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold shadow-md shadow-emerald-600/20 transition active:scale-95"
@@ -152,17 +152,19 @@ export default function DashboardPage({ onNavigateTab, onOpenAddExpense }) {
           </button>
           <button
             onClick={() => onNavigateTab('bills')}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl text-xs font-semibold transition active:scale-95"
+            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl text-xs font-semibold transition active:scale-95"
           >
             <Printer className="w-4 h-4 text-slate-500" />
-            <span>🖨️ ปริ้นบิล</span>
+            <span className="hidden sm:inline">🖨️ ปริ้นบิล</span>
+            <span className="sm:hidden">ปริ้น</span>
           </button>
           <button
             onClick={() => onNavigateTab('settlements')}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl text-xs font-semibold transition active:scale-95"
+            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl text-xs font-semibold transition active:scale-95"
           >
             <CreditCard className="w-4 h-4 text-slate-500" />
-            <span>📱 สรุปหนี้ & QR</span>
+            <span className="hidden sm:inline">📱 สรุปหนี้ & QR</span>
+            <span className="sm:hidden">สรุปหนี้</span>
           </button>
         </div>
       </div>

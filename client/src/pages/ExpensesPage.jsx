@@ -140,29 +140,32 @@ export default function ExpensesPage({ onOpenAddExpense, onEditExpense, onNaviga
           <p className="text-xs text-slate-500 mt-0.5">ค้นหา กรอง และจัดการรายจ่ายประจำเดือน</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
           <button
             onClick={onOpenAddExpense}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm shadow-emerald-600/20 transition active:scale-95"
+            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm shadow-emerald-600/20 transition active:scale-95"
           >
             <PlusCircle className="w-4 h-4" />
-            <span>➕ เพิ่มรายจ่าย</span>
+            <span className="hidden sm:inline">➕ เพิ่มรายจ่าย</span>
+            <span className="sm:hidden">เพิ่ม</span>
           </button>
           <button
             onClick={handleExportExcel}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition active:scale-95"
+            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition active:scale-95"
             title="ส่งออกเป็น Excel (.xlsx)"
           >
             <Download className="w-4 h-4 text-slate-500" />
-            <span>📤 ส่งออก</span>
+            <span className="hidden sm:inline">📤 ส่งออก</span>
+            <span className="sm:hidden">ส่งออก</span>
           </button>
           <button
             onClick={() => onNavigateTab('bills')}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition active:scale-95"
+            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition active:scale-95"
             title="พิมพ์บิล"
           >
             <Printer className="w-4 h-4 text-slate-500" />
-            <span>🖨️ ปริ้น</span>
+            <span className="hidden sm:inline">🖨️ ปริ้น</span>
+            <span className="sm:hidden">ปริ้น</span>
           </button>
         </div>
       </div>

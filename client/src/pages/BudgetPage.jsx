@@ -134,28 +134,30 @@ export default function BudgetPage() {
           <p className="text-xs text-slate-500 mt-1">ตั้งงบรายหมวด ควบคุมค่าใช้จ่าย และดูประวัติการแก้ไข</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
           {!isEditing ? (
             <>
               <button
                 onClick={() => setIsEditing(true)}
-                className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition active:scale-95"
+                className="flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition active:scale-95"
               >
                 <Edit3 className="w-4 h-4" />
-                <span>✏️ แก้ไขงบประมาณ</span>
+                <span className="hidden sm:inline">✏️ แก้ไขงบประมาณ</span>
+                <span className="sm:hidden">แก้ไข</span>
               </button>
               <button
                 onClick={handleCopyPreviousMonth}
                 disabled={loading}
-                className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition active:scale-95"
+                className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition active:scale-95"
                 title="คัดลอกงบประมาณจากเดือนก่อน"
               >
                 <Copy className="w-4 h-4 text-slate-500" />
-                <span>📋 คัดลอกจากเดือนที่แล้ว</span>
+                <span className="hidden sm:inline">📋 คัดลอกจากเดือนที่แล้ว</span>
+                <span className="sm:hidden">คัดลอก</span>
               </button>
               <button
                 onClick={openHistory}
-                className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition active:scale-95"
+                className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition active:scale-95"
               >
                 <History className="w-4 h-4 text-slate-500" />
                 <span>📜 ประวัติ</span>
@@ -166,14 +168,15 @@ export default function BudgetPage() {
               <button
                 onClick={handleSaveBudget}
                 disabled={loading}
-                className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition active:scale-95"
+                className="flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition active:scale-95"
               >
                 <Save className="w-4 h-4" />
-                <span>💾 บันทึกการแก้ไข</span>
+                <span className="hidden sm:inline">💾 บันทึกการแก้ไข</span>
+                <span className="sm:hidden">💾 บันทึก</span>
               </button>
               <button
                 onClick={() => setIsEditing(false)}
-                className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition active:scale-95"
+                className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition active:scale-95"
               >
                 <X className="w-4 h-4 text-slate-500" />
                 <span>❌ ยกเลิก</span>
