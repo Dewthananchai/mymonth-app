@@ -265,10 +265,9 @@ export default function BudgetPage() {
                       <td className="p-3 text-right">
                         <div className="inline-flex items-center gap-1.5">
                           <input
-                            type="number"
-                            min="0"
-                            step="50"
-                            value={item.budget_amount}
+                            type="text"
+                            inputMode="decimal"
+                            value={item.budget_amount || ''}
                             onChange={(e) => handleAmountChange(item.category_id, e.target.value)}
                             className="w-24 text-right px-2 py-1 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 focus:outline-none focus:border-emerald-500"
                           />
