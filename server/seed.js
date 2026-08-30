@@ -33,7 +33,7 @@ export async function seedDatabase(force = false) {
 
   // Only seed default categories — users register themselves in production
   const defaultCategories = [
-    { id: 'cat_electric', name: 'ค่าไฟ', icon: '⚡', color: '#f59e0b', is_default: true, is_system: true },
+    { id: 'cat_electric', name: 'ค่าไฟฟ้า', icon: '⚡', color: '#f59e0b', is_default: true, is_system: true },
     { id: 'cat_water', name: 'ค่าน้ำประปา', icon: '💧', color: '#06b6d4', is_default: true, is_system: true },
     { id: 'cat_internet', name: 'อินเทอร์เน็ต', icon: '🌐', color: '#3b82f6', is_default: true, is_system: true },
     { id: 'cat_drink_water', name: 'ค่าน้ำดื่ม', icon: '🍶', color: '#60a5fa', is_default: true, is_system: true },

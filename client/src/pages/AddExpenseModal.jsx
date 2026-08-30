@@ -12,10 +12,8 @@ export default function AddExpenseModal({ isOpen, onClose, initialData = null })
 
   const [categoryId, setCategoryId] = useState('');
   const [amount, setAmount] = useState('1200');
-  const [expenseDate, setExpenseDate] = useState(
-    selectedMonth ? `${selectedMonth}-15` : new Date().toISOString().substring(0, 10)
-  );
-  const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
+  const [expenseDate, setExpenseDate] = useState(new Date().toISOString().substring(0, 10));
+
   const [expenseType, setExpenseType] = useState('shared'); // 'personal' | 'shared'
   const [payerId, setPayerId] = useState(user?.id || '');
   const [note, setNote] = useState('');
@@ -39,7 +37,6 @@ export default function AddExpenseModal({ isOpen, onClose, initialData = null })
       setCategoryId(initialData.category_id || '');
       setAmount(initialData.amount ? initialData.amount.toString() : '1200');
       setExpenseDate(initialData.expense_date || new Date().toISOString().substring(0, 10));
-      setPaymentMethod(initialData.payment_method || 'bank_transfer');
       setExpenseType(initialData.expense_type || 'shared');
       setPayerId(initialData.created_by || user?.id || '');
       setNote(initialData.note || '');
@@ -163,7 +160,6 @@ export default function AddExpenseModal({ isOpen, onClose, initialData = null })
       formData.append('category_id', categoryId);
       formData.append('amount', numAmount);
       formData.append('expense_date', expenseDate);
-      formData.append('payment_method', paymentMethod);
       formData.append('expense_type', expenseType);
       formData.append('payer_id', payerId);
       formData.append('note', note);
@@ -200,8 +196,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialData = null })
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-        <div className="bg-white rounded-3xl max-w-xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-100 my-6 animate-in fade-in zoom-in-95">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">          <div className="bg-white rounded-3xl max-w-xl w-full max-h-[85vh] sm:max-h-[90vh] flex flex-col shadow-2xl border border-slate-100 my-4 sm:my-6 animate-in fade-in zoom-in-95">
           {/* Header */}
           <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-100 flex-shrink-0">
             <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
@@ -212,8 +207,8 @@ export default function AddExpenseModal({ isOpen, onClose, initialData = null })
             </button>
           </div>
 
-          <div className="px-5 sm:px-6 pt-3 pb-5 sm:pb-6 overflow-y-auto flex-1 min-h-0">
-          <form onSubmit={handleSubmit} className="space-y-3.5">
+          <div className="px-4 sm:px-6 pt-3 pb-4 sm:pb-6 overflow-y-auto flex-1 min-h-0">
+          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-3.5">
             {/* Category Select */}
             <div>
               <div className="flex items-center justify-between mb-1">
@@ -242,8 +237,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialData = null })
               </select>
             </div>
 
-            {/* Amount & Date */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Amount & Date */}              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
                   💰 จำนวนเงินรวม (บาท) *
@@ -255,7 +249,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialData = null })
                   value={amount}
                   onChange={(e) => handleTotalAmountChange(e.target.value)}
                   placeholder="กรอกจำนวนเงิน"
-                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-extrabold text-slate-900 focus:outline-none focus:border-emerald-500"
+                  className="w-full px-3 py-3 border border-slate-200 rounded-xl text-base font-extrabold text-slate-900 focus:outline-none focus:border-emerald-500"
                   required
                 />
               </div>
@@ -268,40 +262,13 @@ export default function AddExpenseModal({ isOpen, onClose, initialData = null })
                   type="date"
                   value={expenseDate}
                   onChange={(e) => setExpenseDate(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-emerald-500"
+                  className="w-full px-3 py-3 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:border-emerald-500"
                   required
                 />
               </div>
             </div>
 
-            {/* Payment Method */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                💳 วิธีชำระเงิน
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 text-xs">
-                {[
-                  { id: 'bank_transfer', label: 'โอนธนาคาร' },
-                  { id: 'cash', label: 'เงินสด' },
-                  { id: 'credit_card', label: 'บัตรเครดิต' },
-                  { id: 'promptpay', label: 'พร้อมเพย์' },
-                  { id: 'other', label: 'อื่นๆ' }
-                ].map((m) => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => setPaymentMethod(m.id)}
-                    className={`py-1.5 px-1.5 rounded-xl border text-center font-semibold transition ${
-                      paymentMethod === m.id
-                        ? 'bg-emerald-50 border-emerald-500 text-emerald-800 font-bold'
-                        : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    {m.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+
 
             {/* Personal vs Shared Toggle */}
             <div>
@@ -414,10 +381,10 @@ export default function AddExpenseModal({ isOpen, onClose, initialData = null })
 
                 {/* Member 1 Row (ดิว) */}
                 <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-2">
-                  <div className="flex justify-between items-center text-xs">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center text-xs gap-2">
                     <span className="font-bold text-slate-800">👤 {m1.full_name}</span>
                     <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-0.5 border border-slate-200 rounded-lg px-2 py-0.5 focus-within:border-emerald-500">
+                      <div className="flex items-center gap-0.5 border border-slate-200 rounded-lg px-2 py-1.5 focus-within:border-emerald-500">
                         <input
                           type="number"
                           min="0"
@@ -425,19 +392,19 @@ export default function AddExpenseModal({ isOpen, onClose, initialData = null })
                           step="0.01"
                           value={m1Pct}
                           onChange={(e) => recalcFromM1Pct(e.target.value)}
-                          className="w-12 text-right font-bold text-slate-800 focus:outline-none bg-transparent"
+                          className="w-12 text-right font-bold text-slate-800 focus:outline-none bg-transparent text-base"
                         />
                         <span className="text-[10px] text-slate-400 font-semibold">%</span>
                       </div>
                       <span className="text-slate-300">↔</span>
-                      <div className="flex items-center gap-0.5 border border-emerald-300 bg-emerald-50/70 rounded-lg px-2 py-0.5 focus-within:border-emerald-500">
+                      <div className="flex items-center gap-0.5 border border-emerald-300 bg-emerald-50/70 rounded-lg px-2 py-1.5 focus-within:border-emerald-500">
                         <input
                           type="number"
                           min="0"
                           step="0.5"
                           value={m1Amt}
                           onChange={(e) => recalcFromM1Amt(e.target.value)}
-                          className="w-18 text-right font-extrabold text-emerald-800 focus:outline-none bg-transparent"
+                          className="w-20 text-right font-extrabold text-emerald-800 focus:outline-none bg-transparent text-base"
                         />
                         <span className="text-[10px] text-emerald-600 font-bold">฿</span>
                       </div>
@@ -449,16 +416,16 @@ export default function AddExpenseModal({ isOpen, onClose, initialData = null })
                     max="100"
                     value={m1Pct}
                     onChange={(e) => recalcFromM1Pct(e.target.value)}
-                    className="w-full h-1.5 bg-slate-200 rounded-lg accent-emerald-600 cursor-pointer"
+                    className="w-full h-2 bg-slate-200 rounded-lg accent-emerald-600 cursor-pointer"
                   />
                 </div>
 
                 {/* Member 2 Row (ป๊อบ) */}
                 <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-2">
-                  <div className="flex justify-between items-center text-xs">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center text-xs gap-2">
                     <span className="font-bold text-slate-800">👤 {m2.full_name}</span>
                     <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-0.5 border border-slate-200 rounded-lg px-2 py-0.5 focus-within:border-emerald-500">
+                      <div className="flex items-center gap-0.5 border border-slate-200 rounded-lg px-2 py-1.5 focus-within:border-emerald-500">
                         <input
                           type="number"
                           min="0"
@@ -466,19 +433,19 @@ export default function AddExpenseModal({ isOpen, onClose, initialData = null })
                           step="0.01"
                           value={m2Pct}
                           onChange={(e) => recalcFromM2Pct(e.target.value)}
-                          className="w-12 text-right font-bold text-slate-800 focus:outline-none bg-transparent"
+                          className="w-12 text-right font-bold text-slate-800 focus:outline-none bg-transparent text-base"
                         />
                         <span className="text-[10px] text-slate-400 font-semibold">%</span>
                       </div>
                       <span className="text-slate-300">↔</span>
-                      <div className="flex items-center gap-0.5 border border-emerald-300 bg-emerald-50/70 rounded-lg px-2 py-0.5 focus-within:border-emerald-500">
+                      <div className="flex items-center gap-0.5 border border-emerald-300 bg-emerald-50/70 rounded-lg px-2 py-1.5 focus-within:border-emerald-500">
                         <input
                           type="number"
                           min="0"
                           step="0.5"
                           value={m2Amt}
                           onChange={(e) => recalcFromM2Amt(e.target.value)}
-                          className="w-18 text-right font-extrabold text-emerald-800 focus:outline-none bg-transparent"
+                          className="w-20 text-right font-extrabold text-emerald-800 focus:outline-none bg-transparent text-base"
                         />
                         <span className="text-[10px] text-emerald-600 font-bold">฿</span>
                       </div>
@@ -490,14 +457,11 @@ export default function AddExpenseModal({ isOpen, onClose, initialData = null })
                     max="100"
                     value={m2Pct}
                     onChange={(e) => recalcFromM2Pct(e.target.value)}
-                    className="w-full h-1.5 bg-slate-200 rounded-lg accent-emerald-600 cursor-pointer"
+                    className="w-full h-2 bg-slate-200 rounded-lg accent-emerald-600 cursor-pointer"
                   />
                 </div>
 
-                <div className="text-[11px] text-slate-500 flex justify-between pt-1">
-                  <span>💡 ผลรวม: <strong>{Math.round((m1Pct + m2Pct) * 10) / 10}%</strong> ({formatNumber(parseFloat(m1Amt || 0) + parseFloat(m2Amt || 0))} ฿)</span>
-                  <span className="text-emerald-700 font-bold">✅ สัมพันธ์กัน 100%</span>
-                </div>
+
               </div>
             )}
 
@@ -531,19 +495,18 @@ export default function AddExpenseModal({ isOpen, onClose, initialData = null })
             </div>
 
             {/* Actions */}
-            <div className="pt-3 flex gap-2 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 py-2.5 px-4 border border-slate-200 text-slate-700 rounded-xl text-xs font-semibold hover:bg-slate-50 transition"
-              >
-                ยกเลิก
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20 transition active:scale-98 disabled:opacity-50"
-              >
+            <div className="pt-3 flex gap-2 border-t border-slate-100">                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 py-3 px-4 border border-slate-200 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-50 transition active:scale-95"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold shadow-md shadow-emerald-600/20 transition active:scale-95 disabled:opacity-50"
+                >
                 {loading ? 'กำลังบันทึก...' : (initialData ? '💾 บันทึกการแก้ไข' : '✨ บันทึกรายจ่าย')}
               </button>
             </div>

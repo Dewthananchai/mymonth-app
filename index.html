@@ -140,7 +140,7 @@
     ];
 
     const initialCategories = [
-      { id: 'cat_electric', name: 'ค่าไฟ', icon: '⚡', color: '#f59e0b', is_system: true },
+      { id: 'cat_electric', name: 'ค่าไฟฟ้า', icon: '⚡', color: '#f59e0b', is_system: true },
       { id: 'cat_water', name: 'ค่าน้ำประปา', icon: '💧', color: '#06b6d4', is_system: true },
       { id: 'cat_internet', name: 'อินเทอร์เน็ต', icon: '🌐', color: '#3b82f6', is_system: true },
       { id: 'cat_drink_water', name: 'ค่าน้ำดื่ม', icon: '🍶', color: '#60a5fa', is_system: true },
@@ -158,7 +158,7 @@
     ];
 
     const initialExpenses = [
-      { id: 'exp_01', category_id: 'cat_electric', category_name: 'ค่าไฟ', category_icon: '⚡', amount: 1200, expense_date: '2026-08-15', payment_method: 'bank_transfer', expense_type: 'shared', note: 'เลขมิเตอร์รอบนี้ 1234', created_by: 'user_dew', creator_name: 'ดิว', tags: ['#จำเป็น', '#ค่าบ้าน'], splits: [{ user_id: 'user_dew', user_name: 'ดิว', share_amount: 600, percentage: 50 }, { user_id: 'user_pop', user_name: 'ป๊อบ', share_amount: 600, percentage: 50 }] },
+      { id: 'exp_01', category_id: 'cat_electric', category_name: 'ค่าไฟฟ้า', category_icon: '⚡', amount: 1200, expense_date: '2026-08-15', payment_method: 'bank_transfer', expense_type: 'shared', note: 'เลขมิเตอร์รอบนี้ 1234', created_by: 'user_dew', creator_name: 'ดิว', tags: ['#จำเป็น', '#ค่าบ้าน'], splits: [{ user_id: 'user_dew', user_name: 'ดิว', share_amount: 600, percentage: 50 }, { user_id: 'user_pop', user_name: 'ป๊อบ', share_amount: 600, percentage: 50 }] },
       { id: 'exp_02', category_id: 'cat_water', category_name: 'ค่าน้ำประปา', category_icon: '💧', amount: 450, expense_date: '2026-08-14', payment_method: 'bank_transfer', expense_type: 'shared', note: 'ค่าน้ำประปาเดือน ส.ค.', created_by: 'user_pop', creator_name: 'ป๊อบ', tags: ['#จำเป็น'], splits: [{ user_id: 'user_dew', user_name: 'ดิว', share_amount: 225, percentage: 50 }, { user_id: 'user_pop', user_name: 'ป๊อบ', share_amount: 225, percentage: 50 }] },
       { id: 'exp_03', category_id: 'cat_internet', category_name: 'อินเทอร์เน็ต', category_icon: '🌐', amount: 699, expense_date: '2026-08-13', payment_method: 'credit_card', expense_type: 'shared', note: 'เน็ตบ้าน 1000/1000 Mbps', created_by: 'user_dew', creator_name: 'ดิว', tags: ['#จำเป็น'], splits: [{ user_id: 'user_dew', user_name: 'ดิว', share_amount: 699, percentage: 100 }, { user_id: 'user_pop', user_name: 'ป๊อบ', share_amount: 0, percentage: 0 }] },
       { id: 'exp_04', category_id: 'cat_credit_card', category_name: 'บัตรเครดิต', category_icon: '💳', amount: 3500, expense_date: '2026-08-10', payment_method: 'bank_transfer', expense_type: 'shared', note: 'ของใช้ส่วนกลาง Makro', created_by: 'user_dew', creator_name: 'ดิว', tags: ['#ของใช้'], splits: [{ user_id: 'user_dew', user_name: 'ดิว', share_amount: 1750, percentage: 50 }, { user_id: 'user_pop', user_name: 'ป๊อบ', share_amount: 1750, percentage: 50 }] },
@@ -969,7 +969,7 @@
     function AddExpenseModalView({ isOpen, onClose, categories, members, currentUser, selectedMonth, initialData, onSave }) {
       const [catId, setCatId] = useState(initialData?.category_id || categories[0]?.id || '');
       const [amount, setAmount] = useState(initialData?.amount ? initialData.amount.toString() : '1200');
-      const [date, setDate] = useState(initialData?.expense_date || `${selectedMonth}-15`);
+      const [date, setDate] = useState(initialData?.expense_date || new Date().toISOString().substring(0, 10));
       const [type, setType] = useState(initialData?.expense_type || 'shared');
       const [payerId, setPayerId] = useState(initialData?.created_by || currentUser.id);
       const [note, setNote] = useState(initialData?.note || '');
@@ -1106,7 +1106,7 @@
 
       return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl space-y-3.5 my-6">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-4 sm:p-6 shadow-2xl space-y-3 sm:space-y-3.5 my-4 sm:my-6">
             <div className="flex justify-between items-center pb-2.5 border-b border-slate-100">
               <h3 className="font-bold text-base">{initialData ? '✏️ แก้ไขรายจ่าย' : '➕ เพิ่มรายจ่ายใหม่'}</h3>
               <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-lg">✕</button>
@@ -1130,22 +1130,22 @@
                     placeholder="1,200.00"
                     value={amount}
                     onChange={(e) => handleTotalAmountChange(e.target.value)}
-                    className="w-full p-2.5 border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-emerald-500"
+                    className="w-full p-3 border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-emerald-500 text-base"
                   />
                 </div>
                 <div>
                   <label className="block font-semibold mb-1">📅 วันที่ *</label>
-                  <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className="w-full p-2.5 border border-slate-200 rounded-xl" />
+                  <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className="w-full p-3 border border-slate-200 rounded-xl text-sm" />
                 </div>
               </div>
 
               <div>
                 <label className="block font-semibold mb-1">📌 ประเภทรายจ่าย *</label>
                 <div className="grid grid-cols-2 gap-2">
-                  <button type="button" onClick={() => setType('personal')} className={`p-2.5 rounded-xl border text-left font-bold transition ${type === 'personal' ? 'bg-blue-50 border-blue-500 text-blue-900' : 'border-slate-200'}`}>
+                  <button type="button" onClick={() => setType('personal')} className={`p-3 rounded-xl border text-left font-bold transition active:scale-95 ${type === 'personal' ? 'bg-blue-50 border-blue-500 text-blue-900' : 'border-slate-200'}`}>
                     ● รายจ่ายส่วนตัว (เฉพาะฉัน)
                   </button>
-                  <button type="button" onClick={() => setType('shared')} className={`p-2.5 rounded-xl border text-left font-bold transition ${type === 'shared' ? 'bg-emerald-50 border-emerald-500 text-emerald-900' : 'border-slate-200'}`}>
+                  <button type="button" onClick={() => setType('shared')} className={`p-3 rounded-xl border text-left font-bold transition active:scale-95 ${type === 'shared' ? 'bg-emerald-50 border-emerald-500 text-emerald-900' : 'border-slate-200'}`}>
                     ● รายจ่ายร่วม (แชร์ห้อง)
                   </button>
                 </div>
@@ -1230,7 +1230,7 @@
                       max="100"
                       value={m1Pct}
                       onChange={(e) => recalcFromM1Pct(e.target.value)}
-                      className="w-full h-1.5 bg-slate-200 rounded-lg accent-emerald-600 cursor-pointer"
+                      className="w-full h-2 bg-slate-200 rounded-lg accent-emerald-600 cursor-pointer"
                     />
                   </div>
 
@@ -1274,14 +1274,11 @@
                       max="100"
                       value={m2Pct}
                       onChange={(e) => recalcFromM2Pct(e.target.value)}
-                      className="w-full h-1.5 bg-slate-200 rounded-lg accent-emerald-600 cursor-pointer"
+                      className="w-full h-2 bg-slate-200 rounded-lg accent-emerald-600 cursor-pointer"
                     />
                   </div>
 
-                  <div className="text-[11px] text-slate-500 flex justify-between pt-1">
-                    <span>💡 ผลรวม: <strong>{Math.round((m1Pct + m2Pct) * 10) / 10}%</strong> ({formatNumber(parseFloat(m1Amt || 0) + parseFloat(m2Amt || 0))} ฿)</span>
-                    <span className="text-emerald-700 font-bold">✅ สัมพันธ์กัน 100%</span>
-                  </div>
+
                 </div>
               )}
 
@@ -1291,8 +1288,8 @@
               </div>
 
               <div className="flex gap-2 pt-2 border-t border-slate-100">
-                <button type="button" onClick={onClose} className="flex-1 py-2.5 border border-slate-200 rounded-xl font-semibold text-slate-600">ยกเลิก</button>
-                <button type="submit" className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-md">บันทึก</button>
+                <button type="button" onClick={onClose} className="flex-1 py-3 border border-slate-200 rounded-xl font-semibold text-slate-600 active:scale-95">ยกเลิก</button>
+                <button type="submit" className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-md active:scale-95">บันทึก</button>
               </div>
             </form>
           </div>
