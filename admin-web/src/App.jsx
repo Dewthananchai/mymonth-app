@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link, useNavigate, useLocation, useParams } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Home, LogOut, Shield, Database,
-  Activity, BarChart3, Settings, Menu, X, Eye, Trash2
+  Activity, BarChart3, Settings, Menu, X, Eye, Trash2, ArrowRightLeft
 } from 'lucide-react';
 import api from './api';
 
@@ -624,18 +624,38 @@ function EditMemberModal({ roomCode, member, onClose }) {
 // ========== USERS PAGE ==========
 function UsersPage() {
   const [users, setUsers] = useState([]);
+  const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [moveModal, setMoveModal] = useState(null); // user object or null
+  const [moveTarget, setMoveTarget] = useState('');
+  const [moveLoading, setMoveLoading] = useState(false);
 
-  useEffect(() => { loadUsers(); }, []);
+  useEffect(() => { loadData(); }, []);
 
-  const loadUsers = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
-      const data = await api.get('/super-admin/users');
-      setUsers(data);
+      const [u, r] = await Promise.all([
+        api.get('/super-admin/users'),
+        api.get('/super-admin/rooms')
+      ]);
+      setUsers(u);
+      setRooms(r);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
+  };
+
+  const handleMove = async () => {
+    if (!moveTarget || !moveModal) return;
+    setMoveLoading(true);
+    try {
+      await api.put(`/super-admin/users/${moveModal.id}/move-room`, { room_code: moveTarget });
+      setMoveModal(null);
+      setMoveTarget('');
+      loadData();
+    } catch (err) { alert(err.message); }
+    finally { setMoveLoading(false); }
   };
 
   const filteredUsers = users.filter(u => {
@@ -659,7 +679,7 @@ function UsersPage() {
         />
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-x-auto">
         <table className="w-full text-xs">
           <thead className="bg-slate-50 text-slate-500 font-semibold">
             <tr>
@@ -678,7 +698,7 @@ function UsersPage() {
             ) : filteredUsers.map(u => (
               <tr key={u.id} className="hover:bg-slate-50/60">
                 <td className="p-3 font-semibold text-slate-800">{u.full_name}</td>
-                <td className="p-3 text-slate-600">{u.email}</td>
+                <td className="p-3 text-slate-600 truncate max-w-[120px]">{u.email}</td>
                 <td className="p-3 text-center">
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                     u.role === 'SuperAdmin' ? 'bg-red-100 text-red-700' :
@@ -686,23 +706,60 @@ function UsersPage() {
                     'bg-slate-100 text-slate-700'
                   }`}>{u.role}</span>
                 </td>
-                <td className="p-3 text-center font-mono text-[11px] text-slate-500">{u.room_code}</td>
+                <td className="p-3 text-center font-mono text-[11px] text-slate-500">{u.room_code || '-'}</td>
                 <td className="p-3 text-center">
-                  {u.role !== 'SuperAdmin' && (
-                    <button onClick={async () => {
-                      if (!window.confirm(`ลบ ${u.full_name}?`)) return;
-                      await api.delete(`/super-admin/users/${u.id}`);
-                      loadUsers();
-                    }} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  )}
+                  <div className="flex items-center justify-center gap-1">
+                    {u.role !== 'SuperAdmin' && (
+                      <button onClick={() => { setMoveModal(u); setMoveTarget(u.room_code || ''); }} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="ย้ายห้อง">
+                        <ArrowRightLeft className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                    {u.role !== 'SuperAdmin' && (
+                      <button onClick={async () => {
+                        if (!window.confirm(`ลบ ${u.full_name}?`)) return;
+                        await api.delete(`/super-admin/users/${u.id}`);
+                        loadData();
+                      }} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* Move Room Modal */}
+      {moveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4">
+            <h3 className="font-bold text-slate-900 text-base">🏠 ย้ายห้อง</h3>
+            <p className="text-xs text-slate-500">ย้าย <span className="font-bold text-slate-800">{moveModal.full_name}</span> ไปห้องอื่น</p>
+            <select
+              value={moveTarget}
+              onChange={e => setMoveTarget(e.target.value)}
+              className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-emerald-500"
+            >
+              <option value="">-- เลือกห้อง --</option>
+              {rooms.map(r => (
+                <option key={r.room_code} value={r.room_code}>
+                  {r.room_name} ({r.room_code})
+                </option>
+              ))}
+            </select>
+            <div className="flex gap-2 pt-2">
+              <button onClick={() => { setMoveModal(null); setMoveTarget(''); }} className="flex-1 py-2 text-xs font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200">ยกเลิก</button>
+              <button
+                onClick={handleMove}
+                disabled={!moveTarget || moveTarget === moveModal.room_code || moveLoading}
+                className="flex-1 py-2 text-xs font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >{moveLoading ? 'กำลังย้าย...' : '🏠 ย้ายห้อง'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

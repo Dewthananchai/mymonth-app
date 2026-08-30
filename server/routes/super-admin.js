@@ -114,7 +114,26 @@ router.get('/users', authenticateToken, superAdminOnly, (req, res) => {
   }
 });
 
-// 6. Delete User
+// 6. Move User to another room
+router.put('/users/:userId/move-room', authenticateToken, superAdminOnly, (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { room_code } = req.body;
+    const user = db.findById('users', userId);
+    if (!user) return res.status(404).json({ error: 'ไม่พบผู้ใช้' });
+    if (user.role === 'SuperAdmin') return res.status(400).json({ error: 'ไม่สามารถย้าย Super Admin ได้' });
+    if (!room_code) return res.status(400).json({ error: 'กรุณาเลือกห้อง' });
+    const room = db.findOne('rooms', r => r.room_code === room_code);
+    if (!room) return res.status(404).json({ error: 'ไม่พบห้องนี้ในระบบ' });
+    db.update('users', userId, { room_code });
+    res.json({ message: `ย้าย ${user.full_name} ไปห้อง ${room.room_name} สำเร็จ` });
+  } catch (err) {
+    console.error('Move user error:', err);
+    res.status(500).json({ error: 'เกิดข้อผิดพลาด' });
+  }
+});
+
+// 6.5 Delete User
 router.delete('/users/:id', authenticateToken, superAdminOnly, (req, res) => {
   try {
     const { id } = req.params;
