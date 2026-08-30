@@ -575,17 +575,28 @@ async function handleTextMessage(event) {
       msg += `\n👥 สรุปรายบุคคล:\n`;
       currentMembers.forEach(m => {
         if (m.paid > 0 || m.share > 0) {
-          const status = m.paid > m.share ? `จ่ายเกิน +${(m.paid - m.share).toLocaleString()}` : m.paid < m.share ? `ยังขาด ${(m.share - m.paid).toLocaleString()}` : 'พอดี';
-          msg += `👤 ${m.name}: จ่าย ${m.paid.toLocaleString()} ฿ / ส่วนแบ่ง ${m.share.toLocaleString()} ฿ → ${status}\n`;
+          const diff = m.paid - m.share;
+          let status = '';
+          if (diff > 0.01) {
+            status = `จ่ายเกิน +${Math.round(diff).toLocaleString()}`;
+          } else if (diff < -0.01) {
+            status = `ยังขาด ${Math.round(Math.abs(diff)).toLocaleString()}`;
+          } else {
+            status = 'พอดี';
+          }
+          msg += `👤 ${m.name}:\n`;
+          msg += `   จ่าย ${Math.round(m.paid).toLocaleString()} ฿\n`;
+          msg += `   ส่วนแบ่ง ${Math.round(m.share).toLocaleString()} ฿\n`;
+          msg += `   ${status}\n`;
         }
       });
     }
 
     // แสดงหนี้
     if (debts.length > 0) {
-      msg += `\n💸 ต้องโอนเงินคืน:\n`;
+      msg += `\n💳 ต้องโอนเงินคืน:\n`;
       debts.forEach(d => {
-        msg += `👉 ${d.from} โอนให้ ${d.to} ${d.amount.toLocaleString()} ฿\n`;
+        msg += `👉 ${d.from} โอนให้ ${d.to} ${Math.round(d.amount).toLocaleString()} ฿\n`;
       });
     }
 
