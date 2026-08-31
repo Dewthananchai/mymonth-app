@@ -220,7 +220,7 @@ router.post('/liff-room', async (req, res) => {
     let user;
     try {
       const jwt = await import('jsonwebtoken');
-      user = jwt.default.verify(token, process.env.JWT_SECRET || 'mymonth-secret-2026');
+      user = jwt.default.verify(token, process.env.JWT_SECRET || 'mymonth-jwt-secret-key-2026-v2');
     } catch {
       return res.status(401).json({ error: 'Invalid token' });
     }
