@@ -67,10 +67,10 @@ export default function LoginPage({ onNavigateRegister }) {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-emerald-50/40 to-teal-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
-      <div className="max-w-4xl w-full bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden grid grid-cols-1 md:grid-cols-2">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-emerald-50/40 to-teal-50 flex items-center justify-center p-0 sm:p-4 lg:p-8">
+      <div className="max-w-4xl w-full bg-white sm:rounded-3xl sm:shadow-2xl border-0 sm:border border-slate-100 overflow-hidden grid grid-cols-1 md:grid-cols-2 min-h-screen sm:min-h-0">
         {/* Left Side: Brand Illustration & Info */}
-        <div className="bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-800 p-8 sm:p-10 text-white flex flex-col justify-between relative overflow-hidden">
+        <div className="bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-800 p-8 sm:p-10 text-white flex flex-col justify-between relative overflow-hidden hidden md:flex">
           <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-white/10 rounded-full blur-2xl" />
           <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-64 h-64 bg-emerald-400/20 rounded-full blur-2xl" />
 
@@ -112,7 +112,7 @@ export default function LoginPage({ onNavigateRegister }) {
         </div>
 
         {/* Right Side: Login Form */}
-        <div className="p-8 sm:p-10 flex flex-col justify-center">
+        <div className="p-6 sm:p-8 md:p-10 flex flex-col justify-center min-h-screen sm:min-h-0">
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
               <span>🔐 เข้าสู่ระบบ</span>
@@ -139,7 +139,7 @@ export default function LoginPage({ onNavigateRegister }) {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="example@email.com"
-                  className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
+                  className="w-full pl-10 pr-4 py-3 sm:py-2.5 border border-slate-200 rounded-xl text-sm sm:text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
                   required
                 />
               </div>
@@ -157,7 +157,7 @@ export default function LoginPage({ onNavigateRegister }) {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••"
-                  className="w-full pl-10 pr-10 py-2.5 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
+                  className="w-full pl-10 pr-10 py-3 sm:py-2.5 border border-slate-200 rounded-xl text-sm sm:text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
                   required
                 />
                 <button
@@ -174,7 +174,7 @@ export default function LoginPage({ onNavigateRegister }) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20 transition active:scale-98 disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-3 sm:py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm sm:text-xs font-bold shadow-md shadow-emerald-600/20 transition active:scale-98 disabled:opacity-50 flex items-center justify-center gap-2"
             >
               <Key className="w-4 h-4" />
               <span>{loading ? 'กำลังเข้าสู่ระบบ...' : '🔑 เข้าสู่ระบบ'}</span>
@@ -186,7 +186,7 @@ export default function LoginPage({ onNavigateRegister }) {
             type="button"
             onClick={() => window.location.href = '/api/line/login'}
             disabled={loading}
-            className="w-full py-3 px-4 bg-[#06C755] hover:bg-[#05a847] text-white rounded-xl text-sm font-bold shadow-md transition flex items-center justify-center gap-2 active:scale-98 mt-4"
+            className="w-full py-4 sm:py-3 px-4 bg-[#06C755] hover:bg-[#05a847] text-white rounded-xl text-base sm:text-sm font-bold shadow-md transition flex items-center justify-center gap-2 active:scale-98 mt-4 sm:mt-4"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="white">
               <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/>
@@ -195,11 +195,11 @@ export default function LoginPage({ onNavigateRegister }) {
           </button>
 
           {/* Register Link */}
-          <div className="mt-6 text-center">
+          <div className="mt-6 sm:mt-6 text-center">
             <button
               type="button"
               onClick={onNavigateRegister}
-              className="text-xs text-emerald-700 hover:text-emerald-800 font-semibold hover:underline"
+              className="text-sm sm:text-xs text-emerald-700 hover:text-emerald-800 font-semibold hover:underline"
             >
               📝 ยังไม่มีบัญชี? สมัครสมาชิกใหม่
             </button>
@@ -209,8 +209,7 @@ export default function LoginPage({ onNavigateRegister }) {
 
       {/* Forgot Password Modal */}
       {forgotModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">            <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 mx-4">
             <h3 className="font-bold text-slate-800 text-base mb-2">ลืมรหัสผ่าน?</h3>
             <p className="text-xs text-slate-500 mb-4">
               กรอกอีเมลของคุณ ระบบจะส่งลิงก์รีเซ็ตรหัสผ่านให้
@@ -226,7 +225,7 @@ export default function LoginPage({ onNavigateRegister }) {
                   value={forgotEmail}
                   onChange={(e) => setForgotEmail(e.target.value)}
                   placeholder="your-email@example.com"
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-emerald-500"
+                  className="w-full px-3 py-3 sm:py-2 border border-slate-200 rounded-xl text-sm sm:text-xs focus:outline-none focus:border-emerald-500"
                   required
                 />
                 <div className="flex gap-2 pt-2">
