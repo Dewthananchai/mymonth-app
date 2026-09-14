@@ -1123,6 +1123,11 @@
                 </select>
               </div>
 
+              <div>
+                <label className="block font-semibold mb-1">📝 โน้ต / หมายเหตุ</label>
+                <input type="text" value={note} onChange={(e) => setNote(e.target.value)} placeholder="เช่น เลขมิเตอร์ 1234" className="w-full p-2.5 border border-slate-200 rounded-xl" />
+              </div>
+
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="block font-semibold mb-1">💰 จำนวนเงินรวม (บาท) *</label>
@@ -1152,11 +1157,6 @@
                     ● รายจ่ายร่วม (แชร์ห้อง)
                   </button>
                 </div>
-              </div>
-
-              <div>
-                <label className="block font-semibold mb-1">📝 โน้ต / หมายเหตุ</label>
-                <input type="text" value={note} onChange={(e) => setNote(e.target.value)} placeholder="เช่น เลขมิเตอร์ 1234" className="w-full p-2.5 border border-slate-200 rounded-xl" />
               </div>
 
               <div>

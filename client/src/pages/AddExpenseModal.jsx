@@ -237,6 +237,20 @@ export default function AddExpenseModal({ isOpen, onClose, initialData = null })
               </select>
             </div>
 
+            {/* Note — right below category */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                📝 โน้ต / หมายเหตุ
+              </label>
+              <input
+                type="text"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="เช่น เลขมิเตอร์รอบนี้ 1234"
+                className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+
             {/* Amount & Date */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
               <div>
@@ -267,20 +281,6 @@ export default function AddExpenseModal({ isOpen, onClose, initialData = null })
                   required
                 />
               </div>
-            </div>
-
-            {/* Note — right below amount/date */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                📝 โน้ต / หมายเหตุ
-              </label>
-              <input
-                type="text"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="เช่น เลขมิเตอร์รอบนี้ 1234"
-                className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-emerald-500"
-              />
             </div>
 
             {/* Personal vs Shared Toggle */}
