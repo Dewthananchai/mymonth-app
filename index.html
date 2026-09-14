@@ -202,7 +202,10 @@
       });
 
       const [currentTab, setCurrentTab] = useState('dashboard');
-      const [selectedMonth, setSelectedMonth] = useState('2026-08');
+      const [selectedMonth, setSelectedMonth] = useState(() => {
+        const n = new Date();
+        return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}`;
+      });
 
       const [categories, setCategories] = useState(() => {
         try {

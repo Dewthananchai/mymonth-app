@@ -6,8 +6,10 @@ const RoomContext = createContext(null);
 
 export function RoomProvider({ children }) {
   const { user } = useAuth();
-  // Default to August 2026 as per specification
-  const [selectedMonth, setSelectedMonth] = useState('2026-08');
+  // Default to the current month (YYYY-MM in local time)
+  const now = new Date();
+  const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const [selectedMonth, setSelectedMonth] = useState(currentMonthKey);
   const [categories, setCategories] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [summary, setSummary] = useState({ totalPersonal: 0, totalShared: 0, totalAll: 0, myPersonalTotal: 0 });
