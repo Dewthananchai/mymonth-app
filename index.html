@@ -1155,6 +1155,11 @@
               </div>
 
               <div>
+                <label className="block font-semibold mb-1">📝 โน้ต / หมายเหตุ</label>
+                <input type="text" value={note} onChange={(e) => setNote(e.target.value)} placeholder="เช่น เลขมิเตอร์ 1234" className="w-full p-2.5 border border-slate-200 rounded-xl" />
+              </div>
+
+              <div>
                 <label className="block font-semibold mb-1">👤 ผู้จ่ายเงิน</label>
                 <select value={payerId} onChange={(e) => setPayerId(e.target.value)} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium">
                   {members.map(m => <option key={m.id} value={m.id}>{m.full_name}</option>)}
@@ -1284,11 +1289,6 @@
 
                 </div>
               )}
-
-              <div>
-                <label className="block font-semibold mb-1">📝 โน้ต / หมายเหตุ</label>
-                <input type="text" value={note} onChange={(e) => setNote(e.target.value)} placeholder="เช่น เลขมิเตอร์ 1234" className="w-full p-2.5 border border-slate-200 rounded-xl" />
-              </div>
 
               <div className="flex gap-2 pt-2 border-t border-slate-100">
                 <button type="button" onClick={onClose} className="flex-1 py-3 border border-slate-200 rounded-xl font-semibold text-slate-600 active:scale-95">ยกเลิก</button>
