@@ -323,6 +323,13 @@ export default function AddExpenseModal({ isOpen, onClose, initialData = null })
             </div>
 
             {/* 🌟 2-WAY SMART SPLIT (Auto Hidden when Personal is chosen) */}
+            {expenseType === 'shared' && roomMembers.length === 1 && (
+              <div className="p-3 bg-blue-50 rounded-2xl border border-blue-200 text-xs text-blue-800">
+                💡 ห้องนี้ยังมีสมาชิกเพียงคนเดียว — รายจ่ายร่วมจะเป็นส่วนแบ่งของคุณ 100%
+                เมื่อสมาชิกคนอื่นเข้าร่วมห้องแล้ว จะสามารถแบ่งจ่ายกันได้ที่ส่วนนี้
+              </div>
+            )}
+
             {expenseType === 'shared' && roomMembers.length >= 2 && (
               <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
                 <div className="flex justify-between items-center text-xs font-bold text-slate-800">
