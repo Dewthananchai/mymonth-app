@@ -664,8 +664,10 @@ async function handleTextMessage(event) {
 
     let msg = '📋 5 รายการล่าสุด\n\n';
     for (const e of expenses) {
-      const icon = e.type === 'shared' ? '🟢' : '🔵';
-      msg += `${icon} ${e.description} — ${Number(e.amount).toLocaleString()} ฿\n`;
+      const icon = e.expense_type === 'shared' ? '🟢' : '🔵';
+      const label = e.description || e.note || `${e.category_icon || '📦'} ${e.category_name || 'รายจ่าย'}`;
+      const dateStr = e.expense_date ? String(e.expense_date).substring(5, 10).split('-').reverse().join('/') : '';
+      msg += `${icon} ${label}${dateStr ? ` (${dateStr})` : ''} — ${Number(e.amount).toLocaleString()} ฿\n`;
     }
 
     await replyMessage(replyToken, { type: 'text', text: msg });
