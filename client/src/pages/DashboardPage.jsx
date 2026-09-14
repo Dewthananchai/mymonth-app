@@ -159,7 +159,7 @@ export default function DashboardPage({ onNavigateTab, onOpenAddExpense }) {
             <span className="sm:hidden">พิมพ์</span>
           </button>
           <button
-            onClick={() => onNavigateTab('settlements')}
+            onClick={() => onNavigateTab('bills')}
             className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl text-xs font-semibold transition active:scale-95"
           >
             <CreditCard className="w-4 h-4 text-slate-500" />
@@ -457,7 +457,7 @@ export default function DashboardPage({ onNavigateTab, onOpenAddExpense }) {
                   </div>
                 </div>
                 <button
-                  onClick={() => onNavigateTab('settlements')}
+                  onClick={() => onNavigateTab('bills')}
                   className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs transition active:scale-95 flex-shrink-0"
                 >
                   📱 ดู QR โอนเงิน
@@ -467,7 +467,7 @@ export default function DashboardPage({ onNavigateTab, onOpenAddExpense }) {
           </div>
 
           <button
-            onClick={() => onNavigateTab('settlements')}
+            onClick={() => onNavigateTab('bills')}
             className="w-full mt-4 py-2 px-3 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1 border border-slate-100"
           >
             <span>ดูรายละเอียดการสรุปหนี้ทั้งหมด</span>
