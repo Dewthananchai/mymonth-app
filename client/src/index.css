@@ -73,6 +73,17 @@
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* iOS Safari fixes: make buttons reliably tappable inside fixed modals */
+button {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  cursor: pointer;
+}
+.fixed {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
 /* Pulse glow for loading icon */
 @keyframes pulseGlow {
   0%, 100% {

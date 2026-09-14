@@ -1105,7 +1105,7 @@
       const m2 = members[1] || { full_name: 'ป๊อบ' };
 
       return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 overflow-y-auto" style="-webkit-overflow-scrolling: touch">
           <div className="bg-white rounded-3xl max-w-lg w-full p-4 sm:p-6 shadow-2xl space-y-3 sm:space-y-3.5 my-4 sm:my-6">
             <div className="flex justify-between items-center pb-2.5 border-b border-slate-100">
               <h3 className="font-bold text-base">{initialData ? '✏️ แก้ไขรายจ่าย' : '➕ เพิ่มรายจ่ายใหม่'}</h3>
@@ -1142,10 +1142,10 @@
               <div>
                 <label className="block font-semibold mb-1">📌 ประเภทรายจ่าย *</label>
                 <div className="grid grid-cols-2 gap-2">
-                  <button type="button" onClick={() => setType('personal')} className={`p-3 rounded-xl border text-left font-bold transition active:scale-95 ${type === 'personal' ? 'bg-blue-50 border-blue-500 text-blue-900' : 'border-slate-200'}`}>
+                  <button type="button" onClick={() => setType('personal')} style="cursor:pointer;touch-action:manipulation" className={`p-3 rounded-xl border text-left font-bold transition active:scale-95 ${type === 'personal' ? 'bg-blue-50 border-blue-500 text-blue-900' : 'border-slate-200'}`}>
                     ● รายจ่ายส่วนตัว (เฉพาะฉัน)
                   </button>
-                  <button type="button" onClick={() => setType('shared')} className={`p-3 rounded-xl border text-left font-bold transition active:scale-95 ${type === 'shared' ? 'bg-emerald-50 border-emerald-500 text-emerald-900' : 'border-slate-200'}`}>
+                  <button type="button" onClick={() => setType('shared')} style="cursor:pointer;touch-action:manipulation" className={`p-3 rounded-xl border text-left font-bold transition active:scale-95 ${type === 'shared' ? 'bg-emerald-50 border-emerald-500 text-emerald-900' : 'border-slate-200'}`}>
                     ● รายจ่ายร่วม (แชร์ห้อง)
                   </button>
                 </div>
@@ -1422,7 +1422,7 @@
       };
 
       return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 overflow-y-auto" style="-webkit-overflow-scrolling: touch">
           <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl my-6">
 
             {/* Header */}

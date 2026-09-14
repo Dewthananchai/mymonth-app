@@ -196,7 +196,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialData = null })
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">          <div className="bg-white rounded-3xl max-w-xl w-full max-h-[85vh] sm:max-h-[90vh] flex flex-col shadow-2xl border border-slate-100 my-4 sm:my-6 animate-in fade-in zoom-in-95">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>          <div className="bg-white rounded-3xl max-w-xl w-full max-h-[85vh] sm:max-h-[90vh] flex flex-col shadow-2xl border border-slate-100 my-4 sm:my-6">
           {/* Header */}
           <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-100 flex-shrink-0">
             <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
@@ -279,10 +279,11 @@ export default function AddExpenseModal({ isOpen, onClose, initialData = null })
                 <button
                   type="button"
                   onClick={() => setExpenseType('personal')}
+                  style={{ cursor: 'pointer', touchAction: 'manipulation' }}
                   className={`p-2.5 sm:p-3 rounded-2xl border text-left transition ${
                     expenseType === 'personal'
                       ? 'bg-blue-50 border-blue-500 text-blue-900 ring-2 ring-blue-500/20'
-                      : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                      : 'border-slate-200 text-slate-600'
                   }`}
                 >
                   <div className="font-bold">● รายจ่ายส่วนตัว (เฉพาะฉัน)</div>
@@ -292,10 +293,11 @@ export default function AddExpenseModal({ isOpen, onClose, initialData = null })
                 <button
                   type="button"
                   onClick={() => setExpenseType('shared')}
+                  style={{ cursor: 'pointer', touchAction: 'manipulation' }}
                   className={`p-2.5 sm:p-3 rounded-2xl border text-left transition ${
                     expenseType === 'shared'
                       ? 'bg-emerald-50 border-emerald-500 text-emerald-900 ring-2 ring-emerald-500/20'
-                      : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                      : 'border-slate-200 text-slate-600'
                   }`}
                 >
                   <div className="font-bold">● รายจ่ายร่วม (แชร์ห้อง)</div>
