@@ -164,8 +164,8 @@ export default function ExpensesPage({ onOpenAddExpense, onEditExpense, onNaviga
             title="พิมพ์บิล"
           >
             <Printer className="w-4 h-4 text-slate-500" />
-            <span className="hidden sm:inline">🖨️ ปริ้น</span>
-            <span className="sm:hidden">ปริ้น</span>
+            <span className="hidden sm:inline">🖨️ พิมพ์</span>
+            <span className="sm:hidden">พิมพ์</span>
           </button>
         </div>
       </div>

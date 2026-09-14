@@ -151,8 +151,8 @@ export default function BillView() {
               title="พิมพ์บิล"
             >
               <Printer className="w-4 h-4 text-slate-600" />
-              <span className="hidden sm:inline">📄 ปริ้นบิล</span>
-              <span className="sm:hidden">ปริ้น</span>
+              <span className="hidden sm:inline">📄 พิมพ์บิล</span>
+              <span className="sm:hidden">พิมพ์</span>
             </button>
             <button
               onClick={handleDownloadPdf}
