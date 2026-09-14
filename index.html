@@ -970,13 +970,14 @@
 
     // --- 🌟 ADD / EDIT EXPENSE MODAL WITH 2-WAY REACTIVE SYNC ---
     function AddExpenseModalView({ isOpen, onClose, categories, members, currentUser, selectedMonth, initialData, onSave }) {
-      const [catId, setCatId] = useState(initialData?.category_id || categories[0]?.id || '');
+      const [catId, setCatId] = useState(initialData?.category_id || '');
       const [amount, setAmount] = useState(initialData?.amount ? initialData.amount.toString() : '1200');
       const [date, setDate] = useState(initialData?.expense_date || new Date().toISOString().substring(0, 10));
       const [type, setType] = useState(initialData?.expense_type || 'shared');
       const [payerId, setPayerId] = useState(initialData?.created_by || currentUser.id);
       const [note, setNote] = useState(initialData?.note || '');
       const [tags, setTags] = useState((initialData?.tags || []).join(', '));
+      const [catError, setCatError] = useState('');
 
       // 2-Way Reactive Smart Split States for Member 1 & Member 2
       const [m1Pct, setM1Pct] = useState(70);
@@ -1075,6 +1076,11 @@
       const handleSubmit = (e) => {
         e.preventDefault();
         if (!numAmount || numAmount <= 0) return;
+        if (!catId) {
+          setCatError('กรุณาเลือกหมวดหมู่');
+          return;
+        }
+        setCatError('');
         const cat = categories.find(c => c.id === catId) || { name: 'อื่นๆ', icon: '➕' };
         const payer = members.find(m => m.id === payerId) || currentUser;
 
@@ -1118,9 +1124,11 @@
             <form onSubmit={handleSubmit} className="space-y-3 text-xs">
               <div>
                 <label className="block font-semibold mb-1">📂 หมวดหมู่ *</label>
-                <select value={catId} onChange={(e) => setCatId(e.target.value)} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                <select value={catId} onChange={(e) => { setCatId(e.target.value); setCatError(''); }} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                  <option value="" disabled>เลือกหมวดหมู่</option>
                   {categories.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
                 </select>
+                {catError && <p className="text-rose-600 text-[11px] mt-1">⚠️ {catError}</p>}
               </div>
 
               <div>

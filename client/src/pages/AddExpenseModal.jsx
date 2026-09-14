@@ -50,9 +50,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialData = null })
         setM2Amt(initialData.splits[1].share_amount.toString());
       }
     } else {
-      if (categories.length > 0 && !categoryId) {
-        setCategoryId(categories[0].id);
-      }
+      setCategoryId('');
       setPayerId(user?.id || '');
       setAmount('');
       setNote('');
@@ -229,6 +227,7 @@ export default function AddExpenseModal({ isOpen, onClose, initialData = null })
                 className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-emerald-500"
                 required
               >
+                <option value="" disabled>เลือกหมวดหมู่</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.icon} {c.name}
