@@ -479,17 +479,44 @@ async function handleTextMessage(event) {
 
     const monthName = now.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' });
 
-    // สร้างข้อความสรุป
-    let msg = `📊 สรุปเดือน ${monthName}\n\n`;
-    msg += `💰 ยอดรวม: ${totalAll.toLocaleString()} ฿\n`;
-    msg += `🔵 ส่วนตัว: ${myPersonal.toLocaleString()} ฿\n`;
-    msg += `🟢 ร่วม: ${totalShared.toLocaleString()} ฿\n`;
-
-    // รายการรายจ่ายร่วม (รวมตามชื่อหมวด)
     const sharedExpenses = expenses.filter(e => e.expense_type === 'shared');
+
+    // ===== สร้าง Flex Message สรุปเดือน =====
+    const fmt = (n) => Math.round(n).toLocaleString();
+
+    const bodyContents = [
+      {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: '#F0FDFA',
+        cornerRadius: 'md',
+        paddingAll: 'md',
+        contents: [
+          { type: 'text', text: '💰 ยอดรวมทั้งหมด', size: 'sm', color: '#0F766E' },
+          { type: 'text', text: `${fmt(totalAll)} ฿`, size: 'xxl', weight: 'bold', color: '#0F766E' },
+          {
+            type: 'box',
+            layout: 'baseline',
+            margin: 'md',
+            contents: [
+              { type: 'text', text: '🔵 ส่วนตัว', size: 'sm', color: '#555555', flex: 1 },
+              { type: 'text', text: `${fmt(myPersonal)} ฿`, size: 'sm', weight: 'bold', color: '#2563EB' },
+            ],
+          },
+          {
+            type: 'box',
+            layout: 'baseline',
+            contents: [
+              { type: 'text', text: '🟢 ร่วม', size: 'sm', color: '#555555', flex: 1 },
+              { type: 'text', text: `${fmt(totalShared)} ฿`, size: 'sm', weight: 'bold', color: '#059669' },
+            ],
+          },
+        ],
+      },
+    ];
+
+    // 📋 รายจ่ายร่วม (รวมตามชื่อหมวด)
     if (sharedExpenses.length > 0) {
-      msg += `\n📋 รายจ่ายร่วม:\n`;
-      // รวมตามชื่อหมวด (ไม่ใช่ category_id)
       const categoryTotals = {};
       sharedExpenses.forEach(exp => {
         const key = exp.category_name || 'อื่นๆ';
@@ -498,10 +525,21 @@ async function handleTextMessage(event) {
         }
         categoryTotals[key].total += Number(exp.amount);
       });
+
+      bodyContents.push({ type: 'separator', margin: 'lg' });
+      bodyContents.push({ type: 'text', text: '📋 รายจ่ายร่วม', weight: 'bold', size: 'md', margin: 'lg' });
       Object.values(categoryTotals)
         .sort((a, b) => b.total - a.total)
         .forEach(cat => {
-          msg += `• ${cat.icon || ''} ${cat.name}: ${cat.total.toLocaleString()} ฿\n`;
+          bodyContents.push({
+            type: 'box',
+            layout: 'baseline',
+            margin: 'sm',
+            contents: [
+              { type: 'text', text: `${cat.icon || '•'} ${cat.name}`, size: 'sm', color: '#333333', flex: 1, wrap: true },
+              { type: 'text', text: `${fmt(cat.total)} ฿`, size: 'sm', weight: 'bold', color: '#111111', align: 'end' },
+            ],
+          });
         });
     }
 
@@ -570,39 +608,112 @@ async function handleTextMessage(event) {
       if (debtors[dIdx].net > -0.01) dIdx++;
     }
 
-    // แสดงสรุปรายบุคคล
+    // 👥 สรุปรายบุคคล
     if (currentMembers.some(m => m.paid > 0 || m.share > 0)) {
-      msg += `\n👥 สรุปรายบุคคล:\n`;
+      bodyContents.push({ type: 'separator', margin: 'lg' });
+      bodyContents.push({ type: 'text', text: '👥 สรุปรายบุคคล', weight: 'bold', size: 'md', margin: 'lg' });
       currentMembers.forEach(m => {
         if (m.paid > 0 || m.share > 0) {
           const diff = m.paid - m.share;
-          let status = '';
+          let statusText = 'พอดี';
+          let statusColor = '#6B7280';
           if (diff > 0.01) {
-            status = `จ่ายเกิน +${Math.round(diff).toLocaleString()}`;
+            statusText = `จ่ายเกิน +${fmt(diff)}`;
+            statusColor = '#059669';
           } else if (diff < -0.01) {
-            status = `ยังขาด ${Math.round(Math.abs(diff)).toLocaleString()}`;
-          } else {
-            status = 'พอดี';
+            statusText = `ยังขาด ${fmt(Math.abs(diff))}`;
+            statusColor = '#DC2626';
           }
-          msg += `👤 ${m.name}:\n`;
-          msg += `   จ่าย ${Math.round(m.paid).toLocaleString()} ฿\n`;
-          msg += `   ส่วนแบ่ง ${Math.round(m.share).toLocaleString()} ฿\n`;
-          msg += `   ${status}\n`;
+          bodyContents.push({
+            type: 'box',
+            layout: 'vertical',
+            margin: 'md',
+            backgroundColor: '#F9FAFB',
+            cornerRadius: 'md',
+            paddingAll: 'sm',
+            contents: [
+              { type: 'text', text: `👤 ${m.name}`, weight: 'bold', size: 'sm', color: '#111111' },
+              {
+                type: 'box',
+                layout: 'baseline',
+                margin: 'xs',
+                contents: [
+                  { type: 'text', text: 'จ่าย', size: 'xs', color: '#666666', flex: 1 },
+                  { type: 'text', text: `${fmt(m.paid)} ฿`, size: 'xs', color: '#333333', align: 'end' },
+                ],
+              },
+              {
+                type: 'box',
+                layout: 'baseline',
+                contents: [
+                  { type: 'text', text: 'ส่วนแบ่ง', size: 'xs', color: '#666666', flex: 1 },
+                  { type: 'text', text: `${fmt(m.share)} ฿`, size: 'xs', color: '#333333', align: 'end' },
+                ],
+              },
+              { type: 'text', text: statusText, size: 'xs', weight: 'bold', color: statusColor, margin: 'xs' },
+            ],
+          });
         }
       });
     }
 
-    // แสดงหนี้
+    // 💳 ต้องโอนเงินคืน
     if (debts.length > 0) {
-      msg += `\n💳 ต้องโอนเงินคืน:\n`;
+      bodyContents.push({ type: 'separator', margin: 'lg' });
+      bodyContents.push({ type: 'text', text: '💳 ต้องโอนเงินคืน', weight: 'bold', size: 'md', margin: 'lg' });
       debts.forEach(d => {
-        msg += `👉 ${d.from} โอนให้ ${d.to} ${Math.round(d.amount).toLocaleString()} ฿\n`;
+        bodyContents.push({
+          type: 'box',
+          layout: 'baseline',
+          margin: 'sm',
+          contents: [
+            { type: 'text', text: `👉 ${d.from} → ${d.to}`, size: 'sm', color: '#333333', flex: 1, wrap: true },
+            { type: 'text', text: `${fmt(d.amount)} ฿`, size: 'sm', weight: 'bold', color: '#DC2626', align: 'end' },
+          ],
+        });
       });
     }
 
+    // ===== ส่ง Flex Message =====
+    const frontendUrl = LINE_CONFIG.frontendUrl || 'https://mymonth-app.onrender.com';
+    const liffUrl = `${frontendUrl}/liff`;
+
     await replyMessage(replyToken, {
-      type: 'text',
-      text: msg,
+      type: 'flex',
+      altText: `📊 สรุปเดือน ${monthName} — ยอดรวม ${fmt(totalAll)} ฿`,
+      contents: {
+        type: 'bubble',
+        header: {
+          type: 'box',
+          layout: 'vertical',
+          backgroundColor: '#0D9488',
+          paddingAll: 'lg',
+          contents: [
+            { type: 'text', text: `📊 สรุปเดือน ${monthName}`, weight: 'bold', size: 'lg', color: '#FFFFFF' },
+          ],
+        },
+        body: {
+          type: 'box',
+          layout: 'vertical',
+          paddingAll: 'lg',
+          contents: bodyContents,
+        },
+        footer: {
+          type: 'box',
+          layout: 'vertical',
+          contents: [
+            {
+              type: 'button',
+              style: 'primary',
+              color: '#0D9488',
+              action: { type: 'uri', uri: liffUrl, label: '📱 เปิด MyMonth' },
+            },
+          ],
+        },
+        styles: {
+          footer: { separator: true },
+        },
+      },
     });
     return;
   }
