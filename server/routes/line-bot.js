@@ -195,7 +195,7 @@ async function handleFollowEvent(event) {
               { type: 'text', text: '🎉 ยินดีต้อนรับกลับ!', weight: 'bold', size: 'xl', color: '#FFFFFF' },
               { type: 'text', text: 'MyMonth — ระบบจัดการรายจ่าย', size: 'sm', color: '#FFFFFFCC' },
             ],
-            backgroundColor: '#0D9488',
+            backgroundColor: '#EC4899',
             paddingAll: '20px',
           },
           body: {
@@ -234,7 +234,7 @@ async function handleFollowEvent(event) {
                 type: 'button',
                 action: { type: 'uri', uri: liffUrl, label: '📱 เปิด MyMonth' },
                 style: 'primary',
-                color: '#0D9488',
+                color: '#EC4899',
                 height: 'md',
               },
               {
@@ -269,7 +269,7 @@ async function handleFollowEvent(event) {
             { type: 'text', text: 'ยินดีต้อนรับสู่ MyMonth', size: 'lg', color: '#FFFFFFDD' },
             { type: 'text', text: 'ระบบจัดการรายจ่ายส่วนตัวและร่วม', size: 'sm', color: '#FFFFFFAA', margin: 'sm' },
           ],
-          backgroundColor: '#0D9488',
+          backgroundColor: '#EC4899',
           paddingAll: '20px',
         },
         body: {
@@ -300,7 +300,7 @@ async function handleFollowEvent(event) {
               ],
             },
             {
-              type: 'text', text: '💡 พิมพ์ "ช่วย" เพื่อดูคำสั่งทั้งหมด', size: 'sm', color: '#0D9488', margin: 'lg', wrap: true, weight: 'bold',
+              type: 'text', text: '💡 พิมพ์ "ช่วย" เพื่อดูคำสั่งทั้งหมด', size: 'sm', color: '#EC4899', margin: 'lg', wrap: true, weight: 'bold',
             },
           ],
           paddingAll: '15px',
@@ -311,7 +311,7 @@ async function handleFollowEvent(event) {
               type: 'button',
               action: { type: 'uri', uri: liffUrl, label: '🚀 เริ่มใช้งาน MyMonth' },
               style: 'primary',
-              color: '#0D9488',
+              color: '#EC4899',
               height: 'lg',
             },
           ],
@@ -414,7 +414,7 @@ async function handleTextMessage(event) {
             contents: [
               { type: 'text', text: '📱 คำสั่ง MyMonth', weight: 'bold', size: 'xl', color: '#FFFFFF' },
             ],
-            backgroundColor: '#0D9488',
+            backgroundColor: '#EC4899',
             paddingAll: '20px',
           },
           body: {
@@ -489,19 +489,19 @@ async function handleTextMessage(event) {
       {
         type: 'box',
         layout: 'vertical',
-        backgroundColor: '#F0FDFA',
+        backgroundColor: '#FDF2F8',
         cornerRadius: 'md',
         paddingAll: 'md',
         contents: [
-          { type: 'text', text: '💰 ยอดรวมทั้งหมด', size: 'sm', color: '#0F766E' },
-          { type: 'text', text: `${fmt(totalAll)} ฿`, size: 'xxl', weight: 'bold', color: '#0F766E' },
+          { type: 'text', text: '💰 ยอดรวมทั้งหมด', size: 'sm', color: '#DB2777' },
+          { type: 'text', text: `${fmt(totalAll)} ฿`, size: 'xxl', weight: 'bold', color: '#DB2777' },
           {
             type: 'box',
             layout: 'baseline',
             margin: 'md',
             contents: [
               { type: 'text', text: '🔵 ส่วนตัว', size: 'sm', color: '#555555', flex: 1 },
-              { type: 'text', text: `${fmt(myPersonal)} ฿`, size: 'sm', weight: 'bold', color: '#2563EB' },
+              { type: 'text', text: `${fmt(myPersonal)} ฿`, size: 'sm', weight: 'bold', color: '#BE185D' },
             ],
           },
           {
@@ -509,7 +509,7 @@ async function handleTextMessage(event) {
             layout: 'baseline',
             contents: [
               { type: 'text', text: '🟢 ร่วม', size: 'sm', color: '#555555', flex: 1 },
-              { type: 'text', text: `${fmt(totalShared)} ฿`, size: 'sm', weight: 'bold', color: '#059669' },
+              { type: 'text', text: `${fmt(totalShared)} ฿`, size: 'sm', weight: 'bold', color: '#DB2777' },
             ],
           },
         ],
@@ -617,19 +617,19 @@ async function handleTextMessage(event) {
         if (m.paid > 0 || m.share > 0) {
           const diff = m.paid - m.share;
           let statusText = 'พอดี';
-          let statusColor = '#6B7280';
+          let statusColor = '#F9A8D4';
           if (diff > 0.01) {
             statusText = `จ่ายเกิน +${fmt(diff)}`;
-            statusColor = '#059669';
+            statusColor = '#DB2777';
           } else if (diff < -0.01) {
             statusText = `ยังขาด ${fmt(Math.abs(diff))}`;
-            statusColor = '#DC2626';
+            statusColor = '#9D174D';
           }
           bodyContents.push({
             type: 'box',
             layout: 'vertical',
             margin: 'md',
-            backgroundColor: '#F9FAFB',
+            backgroundColor: '#FDF2F8',
             cornerRadius: 'md',
             paddingAll: 'sm',
             contents: [
@@ -669,7 +669,7 @@ async function handleTextMessage(event) {
           margin: 'sm',
           contents: [
             { type: 'text', text: `👉 ${d.from} → ${d.to}`, size: 'sm', color: '#333333', flex: 1, wrap: true },
-            { type: 'text', text: `${fmt(d.amount)} ฿`, size: 'sm', weight: 'bold', color: '#DC2626', align: 'end' },
+            { type: 'text', text: `${fmt(d.amount)} ฿`, size: 'sm', weight: 'bold', color: '#9D174D', align: 'end' },
           ],
         });
       });
@@ -687,7 +687,7 @@ async function handleTextMessage(event) {
         header: {
           type: 'box',
           layout: 'vertical',
-          backgroundColor: '#0D9488',
+          backgroundColor: '#EC4899',
           paddingAll: 'lg',
           contents: [
             { type: 'text', text: `📊 สรุปเดือน ${monthName}`, weight: 'bold', size: 'lg', color: '#FFFFFF' },
@@ -706,7 +706,7 @@ async function handleTextMessage(event) {
             {
               type: 'button',
               style: 'primary',
-              color: '#0D9488',
+              color: '#EC4899',
               action: { type: 'uri', uri: liffUrl, label: '📱 เปิด MyMonth' },
             },
           ],
