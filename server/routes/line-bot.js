@@ -501,7 +501,7 @@ async function handleTextMessage(event) {
             margin: 'md',
             contents: [
               { type: 'text', text: '🔵 ส่วนตัว', size: 'sm', color: '#555555', flex: 1 },
-              { type: 'text', text: `${fmt(myPersonal)} ฿`, size: 'sm', weight: 'bold', color: '#BE185D' },
+              { type: 'text', text: `${fmt(myPersonal)} ฿`, size: 'sm', weight: 'bold', color: '#2563EB' },
             ],
           },
           {
@@ -509,7 +509,7 @@ async function handleTextMessage(event) {
             layout: 'baseline',
             contents: [
               { type: 'text', text: '🟢 ร่วม', size: 'sm', color: '#555555', flex: 1 },
-              { type: 'text', text: `${fmt(totalShared)} ฿`, size: 'sm', weight: 'bold', color: '#DB2777' },
+              { type: 'text', text: `${fmt(totalShared)} ฿`, size: 'sm', weight: 'bold', color: '#059669' },
             ],
           },
         ],
@@ -620,10 +620,10 @@ async function handleTextMessage(event) {
           let statusColor = '#F9A8D4';
           if (diff > 0.01) {
             statusText = `จ่ายเกิน +${fmt(diff)}`;
-            statusColor = '#DB2777';
+            statusColor = '#059669';
           } else if (diff < -0.01) {
             statusText = `ยังขาด ${fmt(Math.abs(diff))}`;
-            statusColor = '#9D174D';
+            statusColor = '#9F1239';
           }
           bodyContents.push({
             type: 'box',
@@ -669,7 +669,7 @@ async function handleTextMessage(event) {
           margin: 'sm',
           contents: [
             { type: 'text', text: `👉 ${d.from} → ${d.to}`, size: 'sm', color: '#333333', flex: 1, wrap: true },
-            { type: 'text', text: `${fmt(d.amount)} ฿`, size: 'sm', weight: 'bold', color: '#9D174D', align: 'end' },
+            { type: 'text', text: `${fmt(d.amount)} ฿`, size: 'sm', weight: 'bold', color: '#9F1239', align: 'end' },
           ],
         });
       });
