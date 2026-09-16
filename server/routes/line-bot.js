@@ -473,9 +473,10 @@ async function handleTextMessage(event) {
       return e.room_code === user.room_code && d.getMonth() === month && d.getFullYear() === year;
     });
 
-    const totalAll = expenses.reduce((s, e) => s + Number(e.amount), 0);
+    // ยอดรวมทั้งหมด = ส่วนตัวของผู้ใช้ที่ดูสรุป + ร่วมจ่าย (เพื่อให้สูตรตรง: รวม = ส่วนตัว + ร่วม)
     const myPersonal = expenses.filter(e => e.expense_type === 'personal' && e.created_by === user.id).reduce((s, e) => s + Number(e.amount), 0);
     const totalShared = expenses.filter(e => e.expense_type === 'shared').reduce((s, e) => s + Number(e.amount), 0);
+    const totalAll = myPersonal + totalShared;
 
     const monthName = now.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' });
 
