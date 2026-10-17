@@ -17,6 +17,7 @@ import lineLoginRoutes from './routes/line-login.js';
 import lineNotifyRoutes from './routes/line-notify.js';
 import lineBotRoutes from './routes/line-bot.js';
 import slipsRoutes from './routes/slips.js';
+import { isOcrConfigured } from './utils/slip-ocr.js';
 import { seedDatabase } from './seed.js';
 import { db } from './db.js';
 
@@ -62,7 +63,12 @@ app.use('/admin', express.static(adminDistPath));
 
 // Health check (must be before SPA fallback)
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', app: 'MyMonth API v2.0', timestamp: new Date().toISOString() });
+  res.json({
+    status: 'ok',
+    app: 'MyMonth API v2.0',
+    slipOcr: isOcrConfigured() ? 'ready' : 'not_configured',
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // Debug: List all registered routes (before SPA fallback)
