@@ -26,6 +26,12 @@ services:
         sync: false
       - key: LINE_FRONTEND_URL
         sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        sync: false
+      - key: SLIP_OCR_DAILY_LIMIT
+        value: 150
 
   - type: pgsql
     name: mymonth-db

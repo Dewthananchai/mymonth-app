@@ -30,6 +30,14 @@ const upload = multer({
 
 const router = express.Router();
 
+// Helper: ตรวจว่าสลิปที่อ้างอิงอยู่ในห้องเดียวกับผู้ใช้
+function resolveSlip(slipId, roomCode) {
+  if (!slipId) return null;
+  const slip = db.findById('slips', slipId);
+  if (!slip || slip.room_code !== roomCode) return null;
+  return slip;
+}
+
 // Helper to attach splits to expense object
 function attachSplits(expense) {
   const splits = db.find('expense_splits', s => s.expense_id === expense.id);
@@ -163,6 +171,7 @@ router.post('/', authenticateToken, upload.single('bill_image'), (req, res) => {
     const isRecurring = is_recurring === 'true' || is_recurring === true;
     const actualPayerId = payer_id || req.user.id;
     const payerUser = db.findById('users', actualPayerId) || req.user;
+    const slip = resolveSlip(req.body.slip_id, req.user.room_code);
 
     const newExpense = db.insert('expenses', {
       room_code: req.user.room_code,
@@ -176,6 +185,8 @@ router.post('/', authenticateToken, upload.single('bill_image'), (req, res) => {
       note: note || '',
       tags: parsedTags,
       bill_image_url: req.file ? `/uploads/${req.file.filename}` : null,
+      slip_id: slip ? slip.id : null,
+      slip_image_url: slip ? `/api/slips/${slip.id}/image` : null,
       created_by: actualPayerId,
       creator_name: payerUser.full_name,
       is_recurring: isRecurring
@@ -219,6 +230,10 @@ router.post('/', authenticateToken, upload.single('bill_image'), (req, res) => {
           paid_at: sp.is_paid ? new Date().toISOString() : null
         });
       });
+    }
+
+    if (slip) {
+      db.update('slips', slip.id, { status: 'used', expense_id: newExpense.id });
     }
 
     // Trigger Notification for Room Members
@@ -306,6 +321,13 @@ router.put('/:id', authenticateToken, upload.single('bill_image'), (req, res) =>
     if (req.file) {
       updates.bill_image_url = `/uploads/${req.file.filename}`;
     }
+
+    const slip = resolveSlip(req.body.slip_id, req.user.room_code);
+    if (slip) {
+      updates.slip_id = slip.id;
+      updates.slip_image_url = `/api/slips/${slip.id}/image`;
+    }
+
     if (payer_id) {
       const payer = db.findById('users', payer_id);
       updates.created_by = payer_id;
@@ -313,6 +335,10 @@ router.put('/:id', authenticateToken, upload.single('bill_image'), (req, res) =>
     }
 
     const updated = db.update('expenses', id, updates);
+
+    if (slip) {
+      db.update('slips', slip.id, { status: 'used', expense_id: id });
+    }
 
     // Update splits if shared
     if (updates.expense_type === 'shared' || (!updates.expense_type && existing.expense_type === 'shared')) {

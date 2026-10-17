@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { X, Plus, Calendar, CreditCard, Tag, Upload, Repeat, User, DollarSign } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Plus, Calendar, CreditCard, Tag, Upload, Repeat, User, DollarSign, Camera, Loader2, Check } from 'lucide-react';
 import { useRoom } from '../context/RoomContext';
 import { useAuth } from '../context/AuthContext';
 import CategoryModal from '../components/CategoryModal';
 import api from '../utils/api';
+import { compressImage } from '../utils/image';
 import { formatNumber } from '../utils/formatters';
 
 export default function AddExpenseModal({ isOpen, onClose, initialData = null }) {
@@ -22,6 +23,13 @@ export default function AddExpenseModal({ isOpen, onClose, initialData = null })
   const [billFile, setBillFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [openCategoryModal, setOpenCategoryModal] = useState(false);
+
+  // 📷 สลิปโอนเงิน (OCR)
+  const [slipScanning, setSlipScanning] = useState(false);
+  const [slipError, setSlipError] = useState('');
+  const [scannedSlip, setScannedSlip] = useState(null);
+  const [slipPreview, setSlipPreview] = useState(null);
+  const slipInputRef = useRef(null);
 
   // 🌟 2-Way Reactive Smart Split States for 2 Members
   const [m1Pct, setM1Pct] = useState(70);
@@ -43,6 +51,15 @@ export default function AddExpenseModal({ isOpen, onClose, initialData = null })
       setTagsInput((initialData.tags || []).join(', '));
       setIsRecurring(!!initialData.is_recurring);
 
+      setSlipScanning(false);
+      setSlipError('');
+      setSlipPreview(null);
+      setScannedSlip(initialData.slip_id ? {
+        id: initialData.slip_id,
+        imageUrl: initialData.slip_image_url || `/api/slips/${initialData.slip_id}/image`,
+        amount: initialData.amount,
+      } : null);
+
       if (initialData.splits && initialData.splits.length >= 2) {
         setM1Pct(initialData.splits[0].percentage);
         setM1Amt(initialData.splits[0].share_amount.toString());
@@ -61,6 +78,10 @@ export default function AddExpenseModal({ isOpen, onClose, initialData = null })
       setM2Pct(50);
       setM1Amt('0');
       setM2Amt('0');
+      setSlipScanning(false);
+      setSlipError('');
+      setScannedSlip(null);
+      setSlipPreview(null);
     }
   }, [initialData, categories, user, isOpen]);
 
@@ -132,6 +153,66 @@ export default function AddExpenseModal({ isOpen, onClose, initialData = null })
     }
   };
 
+  // ===== 📷 สแกนสลิปโอนเงิน =====
+  const handleSlipFile = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = ''; // เลือกไฟล์เดิมซ้ำได้
+    if (!file) return;
+
+    setSlipError('');
+    setSlipScanning(true);
+
+    try {
+      const compressed = await compressImage(file);
+      setSlipPreview(prev => {
+        if (prev) URL.revokeObjectURL(prev);
+        return URL.createObjectURL(compressed);
+      });
+
+      const formData = new FormData();
+      formData.append('slip_image', compressed, compressed.name || 'slip.jpg');
+      const result = await api.post('/slips/scan', formData);
+
+      applySlipResult(result);
+      showToast('อ่านสลิปเรียบร้อย — ตรวจสอบตัวเลขก่อนบันทึกนะคะ', 'success');
+    } catch (err) {
+      setScannedSlip(null);
+      setSlipError(err.message || 'อ่านสลิปไม่สำเร็จ');
+    } finally {
+      setSlipScanning(false);
+    }
+  };
+
+  const applySlipResult = (slip) => {
+    setScannedSlip(slip);
+
+    if (slip.amount) {
+      handleTotalAmountChange(String(slip.amount));
+    }
+    if (slip.date) {
+      setExpenseDate(slip.date);
+    }
+
+    if (!note.trim()) {
+      const parts = [slip.receiverName ? `สลิปโอนให้ ${slip.receiverName}` : 'สลิปโอนเงิน'];
+      if (slip.transRef) parts.push(`Ref. ${slip.transRef}`);
+      setNote(parts.join(' · '));
+    }
+
+    if (!categoryId) {
+      const hint = `${slip.receiverName || ''} ${slip.senderName || ''}`.toLowerCase();
+      const matched = categories.find(c => hint.includes(String(c.name).toLowerCase()));
+      if (matched) setCategoryId(matched.id);
+    }
+  };
+
+  const clearSlip = () => {
+    if (slipPreview) URL.revokeObjectURL(slipPreview);
+    setSlipPreview(null);
+    setScannedSlip(null);
+    setSlipError('');
+  };
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
@@ -170,6 +251,10 @@ export default function AddExpenseModal({ isOpen, onClose, initialData = null })
 
       if (billFile) {
         formData.append('bill_image', billFile);
+      }
+
+      if (scannedSlip?.id) {
+        formData.append('slip_id', scannedSlip.id);
       }
 
       if (initialData?.id) {
@@ -248,6 +333,78 @@ export default function AddExpenseModal({ isOpen, onClose, initialData = null })
                 placeholder="เช่น เลขมิเตอร์รอบนี้ 1234"
                 className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-emerald-500"
               />
+            </div>
+
+            {/* 📷 สแกนสลิปโอนเงิน */}
+            <div className="rounded-2xl border border-pink-200 bg-pink-50/70 p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <div className="text-xs font-bold text-pink-700">📷 สแกนสลิปโอนเงิน</div>
+                  <p className="text-[10px] text-pink-500 mt-0.5">ให้ AI อ่านยอดเงิน/วันที่ให้อัตโนมัติ</p>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  {(scannedSlip || slipPreview) && (
+                    <button
+                      type="button"
+                      onClick={clearSlip}
+                      className="text-[10px] text-pink-600 hover:text-pink-800 font-semibold px-2 py-1"
+                    >
+                      ลบ
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => slipInputRef.current?.click()}
+                    disabled={slipScanning}
+                    className="flex items-center gap-1 px-3 py-2 rounded-xl bg-pink-500 text-white text-[11px] font-bold hover:bg-pink-600 disabled:opacity-60 transition"
+                  >
+                    {slipScanning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
+                    {slipScanning ? 'กำลังอ่าน...' : 'แนบสลิป'}
+                  </button>
+                </div>
+              </div>
+
+              <input
+                ref={slipInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={handleSlipFile}
+              />
+
+              {slipPreview && (
+                <img
+                  src={slipPreview}
+                  alt="สลิปที่แนบ"
+                  className="mt-2 h-24 w-auto max-w-full rounded-xl object-contain border border-pink-200 bg-white"
+                />
+              )}
+
+              {!slipPreview && scannedSlip?.id && scannedSlip.imageUrl && (
+                <img
+                  src={`${scannedSlip.imageUrl}?token=${localStorage.getItem('mymonth_token') || ''}`}
+                  alt="สลิปเดิม"
+                  className="mt-2 h-24 w-auto max-w-full rounded-xl object-contain border border-pink-200 bg-white"
+                />
+              )}
+
+              {slipError && (
+                <p className="mt-2 text-[10px] text-red-600 leading-relaxed">{slipError}</p>
+              )}
+
+              {scannedSlip && !slipError && (
+                <div className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[10px] text-pink-700 font-medium">
+                  <Check className="w-3 h-3" />
+                  <span>อ่านได้ {formatNumber(scannedSlip.amount || 0)} ฿</span>
+                  {scannedSlip.date && <span>· {scannedSlip.date}</span>}
+                  {scannedSlip.senderBank && <span>· {scannedSlip.senderBank}</span>}
+                  {scannedSlip.needsReview && (
+                    <span className="text-amber-600">· ⚠️ ตรวจสอบตัวเลขก่อนบันทึก</span>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Amount & Date */}

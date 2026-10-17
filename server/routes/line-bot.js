@@ -18,6 +18,9 @@ import express from 'express';
 import crypto from 'crypto';
 import LINE_CONFIG from '../config/line.js';
 import { db } from '../db.js';
+import { extractSlip, isOcrConfigured } from '../utils/slip-ocr.js';
+import { putSlipImage, sha256 } from '../slip-store.js';
+import { toBangkokIso } from '../utils/slip-parse.js';
 
 const router = express.Router();
 
@@ -102,6 +105,9 @@ router.post('/webhook', async (req, res) => {
     }
     if (event.type === 'message' && event.message.type === 'text') {
       await handleTextMessage(event);
+    }
+    if (event.type === 'message' && event.message.type === 'image') {
+      await handleImageMessage(event);
     }
   }
 });
@@ -320,6 +326,357 @@ async function handleFollowEvent(event) {
       },
     },
   ]);
+}
+
+// ===== รูปภาพ: อ่านสลิปโอนเงินด้วย AI =====
+
+async function startLoadingAnimation(userId, loadingSeconds = 15) {
+  const { channelAccessToken } = LINE_CONFIG.messaging;
+  if (!channelAccessToken) return;
+  try {
+    await fetch('https://api.line.me/v2/bot/chat/loading/start', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${channelAccessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ chatId: userId, loadingSeconds }),
+    });
+  } catch {
+    // loading animation เป็นของแถม ไม่ต้องให้ทั้ง flow ล้ม
+  }
+}
+
+async function downloadLineImage(messageId) {
+  const { channelAccessToken } = LINE_CONFIG.messaging;
+  if (!channelAccessToken) return null;
+
+  try {
+    const response = await fetch(`https://api-data.line.me/v2/bot/message/${messageId}/content`, {
+      headers: { Authorization: `Bearer ${channelAccessToken}` },
+    });
+    if (!response.ok) return null;
+
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const mime = (response.headers.get('content-type') || 'image/jpeg').split(';')[0];
+    return { buffer, mime };
+  } catch (err) {
+    console.error('LINE image download error:', err.message);
+    return null;
+  }
+}
+
+function guessCategoryFromText(text, categories) {
+  const keywords = {
+    'อาหาร': ['อาหาร', 'ข้าว', 'กาแฟ', 'ขนม', 'น้ำ', 'ซูชิ', 'พิซซ่า', 'ชาบู', 'หมูกระทะ'],
+    'ค่าเดินทาง': ['น้ำมัน', 'แท็กซี่', 'รถ', 'BTS', 'MRT', 'วิน', 'ทางด่วน', 'ที่จอด'],
+    'ค่าสาธารณูปโภค': ['ไฟ', 'น้ำประปา', 'เน็ต', 'อินเทอร์เน็ต', 'โทรศัพท์'],
+    'ของใช้จำเป็น': ['ของใช้', 'ซุปเปอร์', 'มาร์ท', 'โลตัส', 'บิ๊กซี'],
+    'บันเทิง': ['หนัง', 'เกม', 'คอนเสิร์ต', 'เที่ยว'],
+  };
+
+  const lower = String(text || '').toLowerCase();
+
+  for (const [name, words] of Object.entries(keywords)) {
+    if (words.some(word => lower.includes(word.toLowerCase()))) {
+      const found = categories.find(c => c.name === name || c.name.includes(name));
+      if (found) return found;
+    }
+  }
+
+  return categories.find(c => c.name === 'อื่นๆ') || categories[0] || { id: null, name: 'อื่นๆ', icon: '➕' };
+}
+
+function formatSlipAmount(value) {
+  return (Number(value) || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// อัปเดตสถานะสลิปเมื่อถูกนำไปสร้างรายจ่ายแล้ว
+function markSlipUsed(slipId) {
+  if (!slipId) return;
+  const expense = db.find('expenses', e => e.slip_id === slipId).slice(-1)[0];
+  db.update('slips', slipId, { status: 'used', expense_id: expense ? expense.id : null });
+}
+
+function slipRow(label, value) {
+  return {
+    type: 'box',
+    layout: 'horizontal',
+    contents: [
+      { type: 'text', text: label, size: 'xs', color: '#9D174D', flex: 3 },
+      { type: 'text', text: String(value || '-'), size: 'xs', color: '#831843', flex: 5, align: 'end', wrap: true },
+    ],
+  };
+}
+
+function slipResultCard(slip) {
+  const rows = [
+    slipRow('📅 วันที่', `${slip.trans_date || '-'}${slip.trans_time ? ` ${slip.trans_time}` : ''}`),
+    slipRow('👤 จาก', slip.sender_name),
+    slipRow('🏦 ธนาคาร', slip.sender_bank),
+    slipRow('👥 ไปยัง', slip.receiver_name),
+    slipRow('🔖 อ้างอิง', slip.trans_ref),
+  ];
+
+  const bodyContents = [
+    {
+      type: 'box',
+      layout: 'vertical',
+      backgroundColor: '#FDF2F8',
+      cornerRadius: 'lg',
+      paddingAll: 'md',
+      contents: [
+        { type: 'text', text: '💰 ยอดโอน', size: 'xs', color: '#BE185D' },
+        { type: 'text', text: `${formatSlipAmount(slip.amount)} ฿`, size: 'xxl', weight: 'bold', color: '#BE185D' },
+      ],
+    },
+    { type: 'separator', margin: 'md' },
+    { type: 'box', layout: 'vertical', spacing: 'sm', margin: 'md', contents: rows },
+  ];
+
+  if (slip.needs_review) {
+    bodyContents.push({
+      type: 'text',
+      text: '⚠️ AI อ่านไม่ชัวร์ ตรวจสอบตัวเลขก่อนบันทึกนะคะ',
+      size: 'xs',
+      color: '#9D174D',
+      wrap: true,
+      margin: 'md',
+    });
+  }
+
+  return {
+    type: 'flex',
+    altText: `🧾 สลิปโอน ${formatSlipAmount(slip.amount)} ฿`,
+    contents: {
+      type: 'bubble',
+      header: {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: '#EC4899',
+        paddingAll: 'md',
+        contents: [
+          { type: 'text', text: '🧾 อ่านสลิปแล้ว', color: '#FFFFFF', weight: 'bold', size: 'md' },
+        ],
+      },
+      body: { type: 'box', layout: 'vertical', contents: bodyContents },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'sm',
+        contents: [
+          {
+            type: 'button',
+            action: { type: 'message', label: '🔵 บันทึกเป็นส่วนตัว', text: 'ส่วนตัว' },
+            style: 'primary',
+            color: '#EC4899',
+            height: 'sm',
+          },
+          {
+            type: 'button',
+            action: { type: 'message', label: '🟢 บันทึกเป็นรายจ่ายร่วม', text: 'ร่วม' },
+            style: 'secondary',
+            height: 'sm',
+          },
+          {
+            type: 'button',
+            action: { type: 'message', label: '❌ ยกเลิก', text: 'ยกเลิก' },
+            style: 'link',
+            height: 'sm',
+          },
+        ],
+      },
+    },
+  };
+}
+
+function slipErrorCard(message) {
+  const frontendUrl = LINE_CONFIG.frontendUrl || 'https://mymonth-app.onrender.com';
+  const liffId = LINE_CONFIG.liffId || process.env.VITE_LIFF_ID || '';
+  const liffExpenseUrl = liffId
+    ? `https://liff.line.me/${liffId}?redirectUri=${encodeURIComponent(frontendUrl + '/liff-expense')}`
+    : `${frontendUrl}/liff-expense`;
+
+  return {
+    type: 'flex',
+    altText: 'อ่านสลิปไม่สำเร็จ',
+    contents: {
+      type: 'bubble',
+      header: {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: '#BE185D',
+        paddingAll: 'md',
+        contents: [
+          { type: 'text', text: '😕 อ่านสลิปไม่สำเร็จ', color: '#FFFFFF', weight: 'bold', size: 'md' },
+        ],
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'md',
+        contents: [
+          { type: 'text', text: message, size: 'sm', color: '#666666', wrap: true },
+          { type: 'text', text: '💡 เคล็ดลับ: ถ่ายให้เห็นยอดเงินและเลขที่รายการชัด ๆ ไม่เอียง ไม่สะท้อนแสง', size: 'xs', color: '#9D174D', wrap: true },
+        ],
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          {
+            type: 'button',
+            action: { type: 'uri', uri: liffExpenseUrl, label: '📱 จดรายจ่ายเอง' },
+            style: 'primary',
+            color: '#EC4899',
+            height: 'sm',
+          },
+        ],
+      },
+    },
+  };
+}
+
+async function handleImageMessage(event) {
+  const { replyToken, source, message } = event;
+  const userId = source.userId;
+
+  const user = db.findOne('users', u => u.line_user_id === userId);
+  const frontendUrl = LINE_CONFIG.frontendUrl || 'https://mymonth-app.onrender.com';
+
+  if (!user) {
+    await replyMessage(replyToken, {
+      type: 'text',
+      text: `👋 ยังไม่ได้เชื่อมต่อบัญชี MyMonth\n\nกรุณาเข้าเว็บเพื่อเชื่อมต่อ LINE ก่อน แล้วส่งสลิปมาอีกครั้ง\n🔗 ${frontendUrl}`,
+    });
+    return;
+  }
+
+  if (!isOcrConfigured()) {
+    await replyMessage(replyToken, {
+      type: 'text',
+      text: '⚠️ ระบบอ่านสลิปยังไม่เปิดใช้งาน (ยังไม่ได้ตั้งค่า GEMINI_API_KEY)\n\nตอนนี้ยังจดรายจ่ายด้วยข้อความได้ตามปกติค่ะ',
+    });
+    return;
+  }
+
+  await startLoadingAnimation(userId, 15);
+
+  const image = await downloadLineImage(message.id);
+  if (!image) {
+    await replyMessage(replyToken, slipErrorCard('โหลดรูปจาก LINE ไม่สำเร็จ กรุณาส่งใหม่อีกครั้ง'));
+    return;
+  }
+
+  if (image.buffer.length > 8 * 1024 * 1024) {
+    await replyMessage(replyToken, slipErrorCard('รูปใหญ่เกินไป (เกิน 8MB) กรุณาส่งรูปที่เล็กลง'));
+    return;
+  }
+
+  const hash = sha256(image.buffer);
+  const existing = db.findOne('slips', s => s.room_code === user.room_code && s.sha256 === hash);
+
+  if (existing) {
+    if (existing.status === 'used') {
+      await replyMessage(replyToken, {
+        type: 'text',
+        text: `ℹ️ สลิปนี้ถูกบันทึกเป็นรายจ่ายไปแล้ว (${formatSlipAmount(existing.amount)} ฿)`,
+      });
+      return;
+    }
+
+    const categories = db.find('categories', c => true);
+    const category = guessCategoryFromText(`${existing.receiver_name || ''} ${existing.sender_name || ''}`, categories);
+    db.update('users', user.id, {
+      pending_expense: {
+        amount: existing.amount,
+        description: descriptionForSlip(existing),
+        category_id: category.id,
+        category_name: category.name,
+        category_icon: category.icon,
+        note: noteForSlip(existing),
+        slip_id: existing.id,
+        timestamp: new Date().toISOString(),
+      },
+    });
+
+    await replyMessage(replyToken, slipResultCard(existing));
+    return;
+  }
+
+  const ocr = await extractSlip({ buffer: image.buffer, mime: image.mime });
+
+  if (!ocr.ok) {
+    await replyMessage(replyToken, slipErrorCard(ocr.message || 'อ่านสลิปไม่สำเร็จ'));
+    return;
+  }
+
+  if (ocr.validation.status === 'failed') {
+    await replyMessage(replyToken, slipErrorCard(ocr.validation.reasons.join(' · ')));
+    return;
+  }
+
+  let storedImage = null;
+  try {
+    storedImage = await putSlipImage({ buffer: image.buffer, mime: image.mime, roomCode: user.room_code });
+  } catch (err) {
+    console.error('Slip image store error:', err.message);
+  }
+
+  const slip = db.insert('slips', {
+    room_code: user.room_code,
+    user_id: user.id,
+    user_name: user.full_name,
+    source: 'line',
+    image_id: storedImage ? storedImage.id : null,
+    mime: image.mime,
+    sha256: hash,
+    amount: ocr.slip.amount,
+    currency: ocr.slip.currency,
+    trans_ref: ocr.slip.transRef,
+    trans_date: ocr.slip.date,
+    trans_time: ocr.slip.time,
+    occurred_at: toBangkokIso(ocr.slip.date, ocr.slip.time),
+    sender_name: ocr.slip.senderName,
+    sender_bank: ocr.slip.senderBank,
+    receiver_name: ocr.slip.receiverName,
+    receiver_bank: ocr.slip.receiverBank,
+    confidence: ocr.slip.confidence,
+    needs_review: ocr.validation.needsReview,
+    reasons: ocr.validation.reasons,
+    status: 'parsed',
+    model: ocr.model,
+    raw_text: ocr.slip.rawText,
+  });
+
+  const categories = db.find('categories', c => true);
+  const category = guessCategoryFromText(`${slip.receiver_name || ''} ${slip.sender_name || ''}`, categories);
+
+  db.update('users', user.id, {
+    pending_expense: {
+      amount: slip.amount,
+      description: descriptionForSlip(slip),
+      category_id: category.id,
+      category_name: category.name,
+      category_icon: category.icon,
+      note: noteForSlip(slip),
+      slip_id: slip.id,
+      timestamp: new Date().toISOString(),
+    },
+  });
+
+  await replyMessage(replyToken, slipResultCard(slip));
+}
+
+function descriptionForSlip(slip) {
+  if (slip?.receiver_name) return `สลิปโอนให้ ${slip.receiver_name}`;
+  return 'สลิปโอนเงิน';
+}
+
+function noteForSlip(slip) {
+  const parts = [`สลิปโอน${slip?.receiver_name ? `ให้ ${slip.receiver_name}` : ''}`];
+  if (slip?.trans_ref) parts.push(`Ref. ${slip.trans_ref}`);
+  return parts.join(' · ');
 }
 
 // จัดการข้อความจากผู้ใช้
@@ -937,7 +1294,12 @@ async function handleTextMessage(event) {
         note: expenseNote,
         tags: [],
         created_by: user.id,
+        bill_image_url: pendingExpense.slip_id ? `/api/slips/${pendingExpense.slip_id}/image` : null,
+        slip_id: pendingExpense.slip_id || null,
+        slip_image_url: pendingExpense.slip_id ? `/api/slips/${pendingExpense.slip_id}/image` : null,
       });
+
+      markSlipUsed(pendingExpense.slip_id);
 
       db.update('users', user.id, { pending_expense: null });
 
@@ -1051,7 +1413,12 @@ async function handleTextMessage(event) {
       note: `${splitNoteBase} แบ่งจ่าย ${splitLabel}`,
       tags: [],
       created_by: user.id,
+      bill_image_url: pendingExpense.slip_id ? `/api/slips/${pendingExpense.slip_id}/image` : null,
+      slip_id: pendingExpense.slip_id || null,
+      slip_image_url: pendingExpense.slip_id ? `/api/slips/${pendingExpense.slip_id}/image` : null,
     });
+
+    markSlipUsed(pendingExpense.slip_id);
 
     // บันทึก splits (แยก row แต่ละคน)
     const newExpense = db.find('expenses', e => e.description === pendingExpense.description && e.paid_by === user.id).slice(-1)[0];
@@ -1123,7 +1490,12 @@ async function handleTextMessage(event) {
       note: `${customNoteBase} แบ่งจ่าย ${splitLabel}`,
       tags: [],
       created_by: user.id,
+      bill_image_url: pendingExpense.slip_id ? `/api/slips/${pendingExpense.slip_id}/image` : null,
+      slip_id: pendingExpense.slip_id || null,
+      slip_image_url: pendingExpense.slip_id ? `/api/slips/${pendingExpense.slip_id}/image` : null,
     });
+
+    markSlipUsed(pendingExpense.slip_id);
 
     // บันทึก splits (แยก row แต่ละคน)
     const customExpense = db.find('expenses', e => e.description === pendingExpense.description && e.paid_by === user.id).slice(-1)[0];

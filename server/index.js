@@ -16,6 +16,7 @@ import superAdminRoutes from './routes/super-admin.js';
 import lineLoginRoutes from './routes/line-login.js';
 import lineNotifyRoutes from './routes/line-notify.js';
 import lineBotRoutes from './routes/line-bot.js';
+import slipsRoutes from './routes/slips.js';
 import { seedDatabase } from './seed.js';
 import { db } from './db.js';
 
@@ -51,6 +52,7 @@ app.use('/api/super-admin', superAdminRoutes);
 app.use('/api/line', lineLoginRoutes);
 app.use('/api/line-notify', lineNotifyRoutes);
 app.use('/api/line', lineBotRoutes);
+app.use('/api/slips', slipsRoutes);
 
 // Serve static files from client build (production)
 const clientDistPath = path.join(__dirname, '..', 'client', 'dist');

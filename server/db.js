@@ -32,7 +32,8 @@ if (PG_URL) {
 // ===== Default collections =====
 const COLLECTIONS = [
   'users', 'rooms', 'categories', 'expenses', 'expense_splits',
-  'settlements', 'budgets', 'budget_histories', 'notifications', 'recurring_expenses'
+  'settlements', 'budgets', 'budget_histories', 'notifications', 'recurring_expenses',
+  'slips'
 ];
 
 // ===== In-memory cache (for filter functions) =====
@@ -304,6 +305,14 @@ class MyMonthDB {
 }
 
 const dbInstance = new MyMonthDB();
+
+/**
+ * คืน pg Pool (หรือ null ถ้าไม่มี DATABASE_URL)
+ * ใช้โดย slip-store.js ที่ต้องเขียน BYTEA ตรงเข้าตาราง (ไม่ผ่าน cache)
+ */
+export function getPgPool() {
+  return pgPool;
+}
 
 export const db = dbInstance;
 export default dbInstance;
