@@ -111,5 +111,7 @@ npm run dev
   และไม่หายเมื่อ Render redeploy — เก็บสูงสุด 200 รูปต่อห้อง (ลบเก่าสุดอัตโนมัติ)
 - จำกัดการสแกน 20 ครั้ง/ชั่วโมง/ผู้ใช้ และกันสลิปซ้ำด้วย SHA-256 ของรูป
 - ถ้าไม่ได้ตั้ง `GEMINI_API_KEY` แอปยังทำงานปกติ ปุ่มสแกนจะแจ้งว่า "ยังไม่ได้ตั้งค่าระบบอ่านสลิป"
-- ทดสอบกับรูปในเครื่อง: `node server/scripts/slip-ocr-smoke.mjs path/to/slip.jpg`
+- ทดสอบกับรูปในเครื่อง:
+  `node --experimental-default-type=module server/scripts/slip-ocr-smoke.mjs path/to/slip.jpg`
+  (Node 22+ เรียก `node` ตรง ๆ ได้เลย ไม่ต้องใส่ flag)
 - Unit test ตัวแปลงข้อมูล: `node --experimental-default-type=module --test server/utils/slip-parse.test.js`
